@@ -1,0 +1,30 @@
+	
+	mov	dx, 0x3CC
+	in	eax, dx
+	and	eax, 0xFE	; set I/OAS to zero
+	or	eax, 0x2	; set ram enable
+	mov	dx, 0x3C2
+	out	dx, eax
+	
+	mov	dx, 0x3B4	; set start address high register
+	mov	ax, 0x0C
+	out	dx, ax
+	mov	dx, 0x3B5
+	mov	ax, 0xB
+	out	dx, ax
+
+	mov	dx, 0x3B4	; set start address low
+	mov	ax, 0x0D
+	out	dx, ax
+	mov	dx, 0x3B5
+	mov	ax, 0x0000
+	out	dx, ax
+	
+	mov	dx, 0x3CE	; set memory map select to 10b
+	mov	ax, 0x06
+	out	dx, ax
+	mov	dx, 0x3CF
+	in	ax, dx
+	or	ax, 0x8
+	and	ax, 0xB
+	out	dx, ax	
