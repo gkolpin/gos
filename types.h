@@ -4,6 +4,9 @@
 typedef unsigned char 	uchar;
 typedef unsigned int 	uint;
 typedef unsigned short	ushort;
+typedef uint		uint32;
+typedef ushort		uint16;
+typedef uchar		uint8;
 
 typedef enum {FALSE=0, TRUE} bool;
 
