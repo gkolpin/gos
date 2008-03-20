@@ -41,7 +41,7 @@ void cons_putchar(char c){
   }
 
   /* check if we need to move memory up */
-  if (cur_loc_index > CONS_MAX_COL * CONS_MAX_ROW){
+  if (cur_loc_index >= CONS_SIZE){
     /* scroll console up by one line */
     for (i = 0; i < CONS_SIZE - CONS_MAX_COL; i++){
       cur_loc[i] = cur_loc[i + CONS_MAX_COL];
@@ -53,7 +53,7 @@ void cons_putchar(char c){
       cur_loc[i] |= 0;
     }
 
-    cur_loc_index = 0;
+    cur_loc_index = CONS_SIZE - CONS_MAX_COL;
   }
 
   /* Set cursor location */
