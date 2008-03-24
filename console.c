@@ -1,6 +1,7 @@
 #include "console.h"
 #include "types.h"
 #include "gos.h"
+#include "portio.h"
 
 #define VGA_MEM_BASE 	0xB8000
 /* Default color is grey on black */

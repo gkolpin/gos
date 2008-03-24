@@ -656,7 +656,7 @@ keyboard_mapping: enabled=0, map=
 # Examples:
 #   keyboard_type: mf
 #=======================================================================
-#keyboard_type: mf
+keyboard_type: mf
 
 #=======================================================================
 # USER_SHORTCUT:

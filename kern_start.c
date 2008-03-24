@@ -1,18 +1,27 @@
 #include "console.h"
 #include "kprintf.h"
 #include "types.h"
+#include "keyboard.h"
+#include "gos.h"
+
+PRIVATE void kern_init();
 
 void kern_start(void){
   int i;
   char input[3] = {'\0', '\n', '\0'};
-  cons_init();
+
+  kern_init();
   
+  kprintf("hello world");
+
   while (TRUE){
-    for (i = 'a'; i <= 'z'; i++){
-      input[0] = (char)i;
-      kprintf(input);
-    }
+    cons_putchar(getchar());
   }
 
   while (1);
+}
+
+PRIVATE void kern_init(){
+  cons_init();
+  kbd_init();
 }
