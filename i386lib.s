@@ -2,6 +2,7 @@
 
 ; outb (port, uint8 data)
 	
+BITS	32
 [section .text]
 	
 global	outb

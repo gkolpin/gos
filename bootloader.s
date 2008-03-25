@@ -1,23 +1,16 @@
-ORG 7C00h
+ORG 1000h
 	
-%define	LOADOFF	0x7C00
+%define	LOADOFF	0x1000
+	
+%define	PE_ON		0x1
+%define	CODE_SELECTOR	0x8
+%define DATA_SELECTOR	0x10
+%define	STACK_SELECTOR	0x18
 
+BITS	16
 [section .text]
 	
 START:
-	
-	mov	ah, 0x06
-	mov	al, 0x00
-	mov	bh, 0x07
-	mov	cx, 0x00
-	mov	dh, 0x18
-	mov	dl, 0x4f
-	int	0x10		; clear screen
-	
-	mov	ah, 0x02
-	mov	bh, 0x00
-	mov	dx, 0x00
-	int	0x10		; set cursor to upper left
 	
 	xor	ax, ax
 	cli
@@ -43,12 +36,37 @@ load_opsys:
 	jz	error
 	
 load:
-	mov	ah, 0x42
+	mov	ah, 0x42	; load kernel image into memory
 	mov	dl, 0x80
 	mov	bx, DAP
 	mov	si, bx
 	int	0x13
-	jmp	0x1000
+	
+real2prot:
+	cli
+	xor	ax, ax
+	mov	ds, ax
+	lgdt	[GDT_DESCR]
+	
+	mov	eax,  cr0
+	or	eax,  PE_ON
+	mov	cr0,  eax
+	jmp	dword CODE_SELECTOR:prot_mode_start
+	
+BITS 32
+prot_mode_start:
+	mov	ax, DATA_SELECTOR
+	mov	ds, ax
+	mov	es, ax
+	mov	fs, ax
+	mov	gs, ax
+	mov	ss, ax
+	
+	mov	esp, START
+	
+	sti
+
+	jmp	0x10000		; kernel loaded at 0x10000
 
 hang:
 	jmp	hang		; loop forever
@@ -90,13 +108,13 @@ DAP:
 	DB	0xBE
 	DB	0xEF
 
+	DB	0x00		; segment 0x1000
 	DB	0x00
-	DB	0x00
-	DB	0x00		;  place at address 0x1000
-	DB	0x01
+	DB	0x00		;  offset 0x00
+	DB	0x10
 
-	DB	0x01		; absolute sector number to read from
-	DB	0x00
+	DB	0x80		; absolute sector number to read from
+	DB	0x00		; kernel will start at block 0x80
 	DB	0x00
 	DB	0x00
 	DB	0x00
@@ -104,7 +122,43 @@ DAP:
 	DB	0x00
 	DB	0x00
 ENDDAP:	
+		
+align	8			; align global descriptor table to 8 byte boundary
 
-TIMES 0200h - 2 - ($ - $$) DB 0 ;Zerofill up to 510 bytes
+GDT:
+	
+NULL_DESCR:	
+	DW	0x00		; null descriptor
+	DW	0x00
+	DW	0x00
+	DW	0x00
 
-DW 0AA55h ;Boot Sector signature
+CODE_DESCR:
+	DW	0xffff		; limit
+	DW	0x0000		; base = 0
+	DB	0x00		; base = 0
+	DB	0x9A
+	DB	0xCF		; flags = C, limit = F
+	DB	0x00		; base = 0
+
+DATA_DESCR:
+	DW	0xffff		; limit
+	DW	0x0000		; base = 0
+	DB	0x00		; base = 0
+	DB	0x92
+	DB	0xCF		; flags = C, limit = F
+	DB	0x00		; base = 0
+	
+STACK_DESCR:			; grows downwards
+	DW	0xffff
+	DW	0x0000
+	DB	0x00
+	DB	0x96
+	DB	0xCF
+	DB	0x00
+	
+	DW	0x00		; pseudo-descriptor needs to be on odd word address
+GDT_DESCR:
+	DW	0x17
+	DD	GDT
+	
