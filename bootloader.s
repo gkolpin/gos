@@ -64,8 +64,6 @@ prot_mode_start:
 	
 	mov	esp, START
 	
-	sti
-
 	jmp	0x10000		; kernel loaded at 0x10000
 
 hang:

@@ -3,6 +3,7 @@
 #include "types.h"
 #include "keyboard.h"
 #include "gos.h"
+#include "8259_pic.h"
 
 PRIVATE void kern_init();
 
@@ -22,6 +23,7 @@ void kern_start(void){
 }
 
 PRIVATE void kern_init(){
+  pic_init();
   cons_init();
   kbd_init();
 }
