@@ -1,3 +1,4 @@
+#include "kprintf.h"
 #include "keyboard.h"
 #include "portio.h"
 #include "types.h"
@@ -12,6 +13,8 @@
 #define KB_SCS_2	0x02
 #define KB_SIBF_DISABLE	0xFE
 #define KB_SOBF		0x1
+#define KB_GETCMD	0x20
+#define KB_SETCMD	0x60
 
 #define KBSTATP		0x64
 #define KBBUFPORT	0x60
@@ -36,6 +39,14 @@ PRIVATE uint8 kb2ascii[256] =
   };
 
 void kbd_init(){
+  uint8 cmd_byte;
+
+  while (inb(KBSTATP) & 2); 	/* wait until input buffer empty */
+  outb(KBSTATP, KB_GETCMD);	/* send get command byte command */
+  cmd_byte = inb(KBBUFPORT);
+  cmd_byte |= 1;		/* set command byte so that keyboard will generate irq 1 */
+  outb(KBSTATP, KB_SETCMD);	/* send set command */
+  outb(KBBUFPORT, cmd_byte);	/* send command byte */
 }
 
 /* get ascii character of key pressed */

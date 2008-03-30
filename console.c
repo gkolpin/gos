@@ -33,6 +33,15 @@ void cons_putchar(char c){
   case '\r':
     cur_loc_index -= cur_loc_index % CONS_MAX_COL;
     break;
+  case '\b':
+    if (cur_loc_index == 0){
+      return;
+    }
+    cur_loc_index--;
+    cur_loc[cur_loc_index] = DEFAULT_COLOR;
+    cur_loc[cur_loc_index] <<= 8;
+    cur_loc[cur_loc_index] &= 0xFF00;	/* erase character */
+    break;
   default:
     cur_loc[cur_loc_index] = DEFAULT_COLOR;
     cur_loc[cur_loc_index] <<= 8;

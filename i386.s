@@ -1,6 +1,6 @@
-extern kern_start
-global START
-	
+extern 	kern_start
+global 	START
+
 BITS	32
 [section .text]
 

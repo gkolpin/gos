@@ -12,4 +12,8 @@ void pic_init(){
   outb(0xA1, 0x28);		/* init command 2 - redirect irqs 8 - 15 to vector 40 */
   outb(0xA1, 0x2);		/* init command 3 */
   outb(0xA1, 0x1);		/* init command 4 - 80x86 mode */
+
+  /* mask off all irqs except keyboard */
+  outb(0x21, 0xFD);		/* irqs 0 - 8 */
+  outb(0xA1, 0xFF);		/* irqs 8 - 15 */
 }
