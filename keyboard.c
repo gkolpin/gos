@@ -38,6 +38,21 @@ PRIVATE uint8 kb2ascii[256] =
     '2',  '3',  '0',  '.',  NO,   NO,   NO,   NO   // 0x50
   };
 
+PRIVATE uint8 kb2ascii_shift[256] = 
+  {
+    NO,   033,  '!',  '@',  '#',  '$',  '%',  '^',  // 0x00
+    '&',  '*',  '(',  ')',  '_',  '+',  '\b', '\t',
+    'Q',  'W',  'E',  'R',  'T',  'Y',  'U',  'I',  // 0x10
+    'O',  'P',  '{',  '}',  '\n', NO,   'A',  'S',
+    'D',  'F',  'G',  'H',  'J',  'K',  'L',  ':',  // 0x20
+    '"',  '~',  NO,   '|',  'Z',  'X',  'C',  'V',
+    'B',  'N',  'M',  '<',  '>',  '?',  NO,   '*',  // 0x30
+    NO,   ' ',  NO,   NO,   NO,   NO,   NO,   NO,
+    NO,   NO,   NO,   NO,   NO,   NO,   NO,   '7',  // 0x40
+    '8',  '9',  '-',  '4',  '5',  '6',  '+',  '1',
+    '2',  '3',  '0',  '.',  NO,   NO,   NO,   NO,   // 0x50
+  };
+
 void kbd_init(){
   uint8 cmd_byte;
 
@@ -56,6 +71,8 @@ char getchar(){
   return cdata;
 }
 
+PRIVATE bool is_shifted = 0;
+
 /* return -1 if no valid data to be returned */
 PRIVATE int getkbdata(){
   uint8 data;
@@ -66,8 +83,24 @@ PRIVATE int getkbdata(){
 
   /* have we released a key? */
   if (data & 0x80){
+    if (data == (0x2A | 0x80) ||
+	data == (0x36 | 0x80)){
+      /* left shift released */
+      is_shifted = 0;
+    }
+
     return -1;
   }
 
-  return kb2ascii[data];   
+  if (data == 0x2A ||
+      data == 0x36){
+    is_shifted = TRUE;
+    return -1;
+  }
+
+  if (is_shifted){
+    return kb2ascii_shift[data];
+  } else {
+    return kb2ascii[data];
+  }
 }
