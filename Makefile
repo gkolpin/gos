@@ -23,9 +23,10 @@ kern_img: i386.s kernel.o i386lib.o
 i386lib.o: i386lib.s 
 	nasm -f elf -o i386lib.o i386lib.s
 
-kernel.o: kern_start.c console.c kprintf.c i386lib.o keyboard.c 8259_pic.c intvect.c
+kernel.o: kern_start.c console.c kprintf.c i386lib.o keyboard.c 8259_pic.c\
+	 intvect.c ksignal.c
 	gcc -o kernel.o -c -ffreestanding -nostdlib -nodefaultlibs -nostdinc -O0 kern_start.c \
-		console.c kprintf.c keyboard.c 8259_pic.c intvect.c
+		console.c kprintf.c keyboard.c 8259_pic.c intvect.c ksignal.c
 
 c.img: bootloader kern_img bootblock
 	dd if=bootblock count=1 of=c.img conv=notrunc

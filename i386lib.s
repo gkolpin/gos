@@ -6,11 +6,13 @@ BITS	32
 [section .text]
 	
 extern	kb_int
+extern	timer_int
 	
 global	outb
 global	inb
 global 	IDT
 global 	KEYBOARD_INT
+global	TIMER_INT
 global	cmd_lidt
 global	cmd_sti
 global	cmd_int
@@ -69,6 +71,14 @@ KEYBOARD_INT:
 	popad
 	sti
 	iretd
+	
+TIMER_INT:
+	cli
+	pushad
+	call	timer_int
+	popad
+	sti
+	iretd
 
 GEN_INT:
 	iretd
@@ -77,6 +87,8 @@ ERR_INT:
 	add	esp, 4		; remove error code
 	iretd
 	
+ALIGN 8
+	DW	0		; align LIDT pseudo-descriptor to odd word
 LIDTR:
 	DW	0x7FF		; 256 * 8 - 1 :	 size of idt
 	DD	IDT

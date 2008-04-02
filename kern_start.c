@@ -7,6 +7,7 @@
 #include "intvect.h"
 #include "int.h"
 #include "portio.h"
+#include "ksignal.h"
 
 PRIVATE void kern_init();
 
@@ -28,7 +29,8 @@ void kern_start(void){
   cmd_sti();
 
   while (1){
-    cmd_hlt();
+    sleep(1000);
+    kprintf("awoken\n");
   }
 }
 
