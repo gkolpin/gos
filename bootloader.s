@@ -32,7 +32,7 @@ load_opsys:
 	cmp	bx, 0xAA55
 	jnz	error
 
-	test	CL, 0x01
+	test	cl, 0x01
 	jz	error
 	
 load:

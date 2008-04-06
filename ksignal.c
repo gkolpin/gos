@@ -28,7 +28,9 @@ void sleep(uint32 ms){
 }
 
 PRIVATE void k_halt_wait(){
-  while (timer_started && !timer_complete);
+  while (timer_started && !timer_complete){
+    cmd_hlt();
+  }
 
   timer_started = FALSE;
   timer_complete = FALSE;
@@ -52,9 +54,12 @@ PRIVATE void set_timer(){
 }
 
 void timer_int(void){
+
   if (timer_started && ms_ticks_left == 0){
     timer_complete = TRUE;
   }
+
+  set_timer();
 
   /* eoi to controller 2 */
   outb(0xA0, 0x20);
