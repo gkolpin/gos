@@ -3,5 +3,6 @@
 
 void kprintf(const char*);
 int kstrlen(const char*);
+void kprint_int(int n);
 
 #endif

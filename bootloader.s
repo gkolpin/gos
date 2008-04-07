@@ -1,11 +1,14 @@
 ORG 1000h
 	
 %define	LOADOFF	0x1000
+%define KERNEL_STACK	0x10000
 	
 %define	PE_ON		0x1
 %define	CODE_SELECTOR	0x8
 %define DATA_SELECTOR	0x10
 %define	STACK_SELECTOR	0x18
+	
+%define	EXTENDED_MEM	-0x4
 
 BITS	16
 [section .text]
@@ -42,6 +45,12 @@ load:
 	mov	si, bx
 	int	0x13
 	
+get_extended_mem:		; returns number of 1024 byte blocks of extended memory
+	mov	ah, 0x88
+	int	0x15		; return extended memory size in ax
+	push	0x00		; store 0 on stack next so we can pop in protected mode and get a full 2 word value
+	push	ax		; store extended memory on stack
+	
 real2prot:
 	cli
 	xor	ax, ax
@@ -62,8 +71,10 @@ prot_mode_start:
 	mov	gs, ax
 	mov	ss, ax
 	
-	mov	esp, START
+	mov	esp, KERNEL_STACK
 	
+	push	dword [LOADOFF + EXTENDED_MEM]
+
 	jmp	0x10000		; kernel loaded at 0x10000
 
 hang:

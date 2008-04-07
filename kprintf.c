@@ -12,6 +12,17 @@ void kprintf(const char* string){
   }
 }
 
+void kprint_int(int n){
+  if (n <= 9){
+    cons_putchar('0' + n);
+    return;
+  }
+
+  kprint_int(n / 10);
+
+  cons_putchar('0' + (n % 10));
+}
+
 /*int kstrlen(const char* string){
   int i;
   

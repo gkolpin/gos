@@ -9,15 +9,19 @@
 #include "portio.h"
 #include "ksignal.h"
 
-PRIVATE void kern_init();
+PRIVATE void kern_init(void);
 
-void kern_start(void){
+void kern_start(int extended_mem){
   int i;
   char input[3] = {'\0', '\n', '\0'};
 
   kern_init();
   
-  kprintf("hello world");
+  kprintf("hello world\n");
+
+  kprint_int(extended_mem);
+
+  kprintf("\n");
 
   /*while (TRUE){
     cons_putchar(getchar());
@@ -34,7 +38,7 @@ void kern_start(void){
   }
 }
 
-PRIVATE void kern_init(){
+PRIVATE void kern_init(void){
   pic_init();
   cons_init();
   kbd_init();
