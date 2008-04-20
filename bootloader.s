@@ -6,7 +6,9 @@ ORG 1000h
 %define	PE_ON		0x1
 %define	CODE_SELECTOR	0x8
 %define DATA_SELECTOR	0x10
-%define	STACK_SELECTOR	0x18
+%define	TSS_SELECTOR	0x18
+%define DATA_RING3_SELECTOR	0x20
+%define CODE_RING3_SELECTOR	0x28
 	
 %define	EXTENDED_MEM	-0x4
 
@@ -73,6 +75,10 @@ prot_mode_start:
 	
 	mov	esp, KERNEL_STACK
 	
+	push	TSS
+	push	0x3
+	push	0x6
+	push	GDT
 	push	dword [LOADOFF + EXTENDED_MEM]
 
 	jmp	0x10000		; kernel loaded at 0x10000
@@ -132,6 +138,9 @@ DAP:
 	DB	0x00
 ENDDAP:	
 		
+TSS:
+	TIMES 0x68 DB 0		; zero fill with 68h bytes for TSS
+	
 align	8			; align global descriptor table to 8 byte boundary
 
 GDT:
@@ -158,16 +167,27 @@ DATA_DESCR:
 	DB	0xCF		; flags = C, limit = F
 	DB	0x00		; base = 0
 	
-STACK_DESCR:			; grows downwards
-	DW	0xffff
-	DW	0x0000
-	DB	0x00
-	DB	0x96
-	DB	0xCF
-	DB	0x00
+TSS_DESCR:
+	TIMES	8 DB 0
 	
+DATA_RING3:
+	DW	0xffff		; limit
+	DW	0x0000		; base = 0
+	DB	0x00		; base = 0
+	DB	0xF2
+	DB	0xCF		; flags = C, limit = F
+	DB	0x00		; base = 0
+
+CODE_RING3:
+	DW	0xffff		; limit
+	DW	0x0000		; base = 0
+	DB	0x00		; base = 0
+	DB	0xFA
+	DB	0xCF		; flags = C, limit = F
+	DB	0x00		; base = 0
+
 	DW	0x00		; pseudo-descriptor needs to be on odd word address
 GDT_DESCR:
-	DW	0x17
+	DW	0x2F
 	DD	GDT
 	

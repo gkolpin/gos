@@ -8,20 +8,23 @@
 #include "int.h"
 #include "portio.h"
 #include "ksignal.h"
+#include "prot.h"
 
-PRIVATE void kern_init(void);
+PRIVATE void kern_init(gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
 
-void kern_start(int extended_mem){
+void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
   int i;
   char input[3] = {'\0', '\n', '\0'};
 
-  kern_init();
+  kern_init(gdt, gdt_size, tss_pos, tss);
   
-  kprintf("hello world\n");
-
   kprint_int(extended_mem);
-
   kprintf("\n");
+  kprint_int((uint32)gdt);
+  kprintf("\n");
+  kprint_int(gdt_size);
+  kprintf("\n");
+  kprint_int(tss_pos);
 
   /*while (TRUE){
     cons_putchar(getchar());
@@ -33,16 +36,18 @@ void kern_start(int extended_mem){
   cmd_sti();
 
   while (1){
-    sleep(1000);
-    kprintf("awoken\n");
+    cmd_hlt();
+    //sleep(1000);
+    //kprintf("awoken\n");
   }
 }
 
-PRIVATE void kern_init(void){
+PRIVATE void kern_init(gdt_entry* gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
   pic_init();
   cons_init();
   kbd_init();
   intvect_init();
+  prot_init(gdt, gdt_size, tss_pos, tss);
 }
 
 void kb_int(void){

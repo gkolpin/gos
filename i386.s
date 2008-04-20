@@ -1,7 +1,7 @@
 extern 	kern_start
 global 	START
 	
-%define STACK_SIZE	0x4
+%define STACK_SIZE	0x14
 
 BITS	32
 [section .text]

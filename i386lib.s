@@ -16,6 +16,7 @@ global	TIMER_INT
 global	cmd_lidt
 global	cmd_sti
 global	cmd_int
+global	cmd_ltr
 global	GEN_INT
 global	ERR_INT
 global	LIDTR
@@ -43,6 +44,14 @@ cmd_lidt:
 	lidt	[LIDTR]	; memory operand
 	ret
 	
+cmd_ltr:
+	push	ebp
+	mov	ebp, esp
+	mov	dx, [ebp + 8]	; tss descriptor location
+	ltr	dx		; load tss register
+	pop	ebp
+	ret
+
 	;; restore interrupts
 cmd_sti:
 	sti
