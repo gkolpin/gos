@@ -4,6 +4,7 @@
 #include "kprintf.h"
 
 PRIVATE void init_tss_desc(gdt_entry*, void* tss, uint32 tss_pos);
+void cmd_ltr(uint16 tss_pos);
 
 void prot_init(gdt_entry *gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
   init_tss_desc(&gdt[tss_pos], tss, tss_pos);

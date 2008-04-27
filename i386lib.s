@@ -7,6 +7,8 @@ BITS	32
 	
 extern	kb_int
 extern	timer_int
+extern	sched_int
+extern	cur_task_p
 	
 global	outb
 global	inb
@@ -21,6 +23,8 @@ global	GEN_INT
 global	ERR_INT
 global	LIDTR
 global	cmd_hlt
+global	restart_task
+global	get_eflags
 
 outb:
 	push	ebp
@@ -68,6 +72,24 @@ cmd_int:
 cmd_hlt:
 	hlt
 	ret
+	
+get_eflags:
+	pushf
+	mov	eax, [esp]
+	add	esp, 4
+	ret
+
+%define	stack_p	8
+
+restart_task:
+	push	ebp
+	mov	ebp, esp
+	mov	eax, [ebp + 8]
+	mov	esp, [eax + stack_p]
+	popad
+	sti
+	iretd
+	
 
 ALIGN 8				; align IDT to 8 byte boundary
 IDT:
@@ -84,8 +106,11 @@ KEYBOARD_INT:
 TIMER_INT:
 	cli
 	pushad
-	call	timer_int
-	popad
+	mov	eax, [cur_task_p]
+	mov	[eax + stack_p], esp
+	call	sched_int	; call sched_int at each timer tick
+	popad			; we'll never actually get here, 
+				; as the task will have been switched and started in the call to sched_int
 	sti
 	iretd
 
