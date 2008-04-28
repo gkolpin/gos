@@ -9,6 +9,7 @@ extern	kb_int
 extern	timer_int
 extern	sched_int
 extern	cur_task_p
+extern  pic_eoi
 	
 global	outb
 global	inb
@@ -97,6 +98,7 @@ IDT:
 
 KEYBOARD_INT:
 	cli
+	call	pic_eoi
 	pushad
 	call	kb_int
 	popad
@@ -105,6 +107,7 @@ KEYBOARD_INT:
 	
 TIMER_INT:
 	cli
+	call	pic_eoi
 	pushad
 	mov	eax, [cur_task_p]
 	mov	[eax + stack_p], esp

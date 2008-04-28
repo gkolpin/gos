@@ -17,3 +17,10 @@ void pic_init(){
   outb(0x21, 0xFC);		/* irqs 0 - 8 */
   outb(0xA1, 0xFF);		/* irqs 8 - 15 */
 }
+
+void pic_eoi(){
+  /* eoi to controller 2 */
+  outb(0xA0, 0x20);
+  /* eoi to controller 1 */
+  outb(0x20, 0x20);
+}

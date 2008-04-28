@@ -1,6 +1,7 @@
 #include "sched.h"
 #include "gos.h"
 #include "mm.h"
+#include "prot.h"
 #include "kprintf.h"
 
 #define NUM_TASKS 2
@@ -42,7 +43,7 @@ task * create_task(void *code_start){
 
   **(esp) = get_eflags() | 0x200; /* eflags (ensure interrupts enabled) */
   esp[0]--;
-  **(esp) = 0x8;	/* cs */
+  **(esp) = R0_CODE_S;	/* cs */
   esp[0]--;
   **(esp) = (uint32)code_start;	/* eip */
 
@@ -68,11 +69,6 @@ void schedule(task *t){
 void sched_int(){
   cur_task = (cur_task + 1) % num_tasks;
   cur_task_p = &tasks[cur_task];
-
-  /* eoi to controller 2 */
-  outb(0xA0, 0x20);
-  /* eoi to controller 1 */
-  outb(0x20, 0x20);
 
   restart_task(cur_task_p);
 }

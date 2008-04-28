@@ -86,11 +86,4 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
 
 void kb_int(void){
   cons_putchar(getchar());
-
-  /* eoi to keyboard */
-  //outb(0x20, 0x61);
-  /* eoi to controller 2 */
-  outb(0xA0, 0x20);
-  /* eoi to controller 1 */
-  outb(0x20, 0x20);
 }
