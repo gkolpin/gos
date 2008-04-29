@@ -5,6 +5,7 @@
 extern void IDT;
 extern KEYBOARD_INT(void);
 extern TIMER_INT(void);
+extern SYSCALL_INT(void);
 extern GEN_INT(void);
 extern ERR_INT(void);
 extern void LIDTR;
@@ -18,6 +19,8 @@ extern void LIDTR;
 #define KB_VECT        	33
 /* timer vector */
 #define TIMER_VECT	32
+/* sys call int */
+#define SYSCALL_VECT	50
 
 void intvect_init(void){
   int i;
@@ -37,6 +40,12 @@ void intvect_init(void){
       lIDT[i] 	|= ((CODE_SELECTOR) << 16);
       lIDT[i] 	|= ((uint32)TIMER_INT & 0xFFFF);
       lIDT[i+1]	|= ((uint32)TIMER_INT & 0xFFFF0000);
+      lIDT[i+1]	|= 0x8E00;
+    }
+    else if (i == (SYSCALL_VECT * 2)){
+      lIDT[i] 	|= ((CODE_SELECTOR) << 16);
+      lIDT[i] 	|= ((uint32)SYSCALL_INT & 0xFFFF);
+      lIDT[i+1]	|= ((uint32)SYSCALL_INT & 0xFFFF0000);
       lIDT[i+1]	|= 0x8E00;
     }
     else if (i == (8 * 2) || ((i >= 10 * 2) && (i < 15 * 2))){

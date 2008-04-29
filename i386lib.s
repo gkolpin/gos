@@ -10,12 +10,15 @@ extern	timer_int
 extern	sched_int
 extern	cur_task_p
 extern  pic_eoi
+extern	ksyscall
 	
 global	outb
 global	inb
 global 	IDT
 global 	KEYBOARD_INT
 global	TIMER_INT
+global	SYSCALL_INT
+global	MAKE_SYSCALL
 global	cmd_lidt
 global	cmd_sti
 global	cmd_int
@@ -98,24 +101,50 @@ IDT:
 
 KEYBOARD_INT:
 	cli
-	call	pic_eoi
 	pushad
 	call	kb_int
+	call	pic_eoi		; controller eoi
 	popad
 	sti
 	iretd
 	
 TIMER_INT:
 	cli
-	call	pic_eoi
 	pushad
 	mov	eax, [cur_task_p]
 	mov	[eax + stack_p], esp
+	call	pic_eoi		; controller eoi
 	call	sched_int	; call sched_int at each timer tick
 	popad			; we'll never actually get here, 
 				; as the task will have been switched and started in the call to sched_int
 	sti
 	iretd
+	
+SYSCALL_INT:
+	cli
+	pushad
+	push	edx		; syscall parameters were passed in regiters
+	push	ecx
+	push	ebx
+	push	eax
+	call	ksyscall
+	add	esp, 16		; pop 4 syscall parameters off stack
+	popad
+	sti
+	iretd
+	
+MAKE_SYSCALL:
+	push	ebp
+	mov	ebp, esp
+	push	ebx		; callee saved register
+	mov	edx, [ebp + 20]	; pass parameters on the registers
+	mov	ecx, [ebp + 16]
+	mov	ebx, [ebp + 12]
+	mov	eax, [ebp + 8]
+	int	50		; make syscall
+	pop	ebx
+	pop	ebp
+	ret
 
 GEN_INT:
 	iretd
