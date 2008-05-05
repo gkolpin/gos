@@ -3,6 +3,7 @@
 #include "mm.h"
 #include "prot.h"
 #include "kprintf.h"
+#include "utility.h"
 
 #define NUM_TASKS 2
 #define DEFAULT_STACK_SIZE 0x1000
@@ -25,31 +26,30 @@ void sched_init(){
 }
 
 task * create_task(void *code_start){
-  uint32 **esp;
-
   task *task_return = malloc(sizeof(task) + DEFAULT_STACK_SIZE);
   if (task_return == NULL){
     kprintf("Error allocating memory\n");
   }
   task_return->stack = task_return + sizeof(task);
   task_return->stack_len = DEFAULT_STACK_SIZE;
-  task_return->stack_p = task_return->stack + DEFAULT_STACK_SIZE - 1;
 
-  esp = &task_return->stack_p;
-
-  kprintf("\n");
+  /*kprintf("\n");
   kprint_int((uint32)*esp);
-  kprintf("\n");
+  kprintf("\n");*/
 
-  **(esp) = get_eflags() | 0x200; /* eflags (ensure interrupts enabled) */
-  esp[0]--;
-  **(esp) = R0_CODE_S;	/* cs */
-  esp[0]--;
-  **(esp) = (uint32)code_start;	/* eip */
+  task_return->gs = R3_DATA_S;
+  task_return->fs = R3_DATA_S;
+  task_return->es = R3_DATA_S;
+  task_return->ds = R3_DATA_S;
+  
+  /* to be popped off by iret */
+  task_return->ss = R3_DATA_S;
+  task_return->esp = (uint32)(task_return->stack + task_return->stack_len - 1);
+  task_return->eflags = get_eflags() | 0x200; /* eflags (ensure interrupts enabled) */
+  task_return->cs = R3_CODE_S;	/* cs */
+  task_return->eip = (uint32)code_start;	/* eip */
 
-  esp[0] -= 8; 		/* simulate pusha */
-
-  kprint_int((uint32)task_return->stack_p);
+  /*kprint_int((uint32)task_return->stack_p);*/
 
   return task_return;
 }
@@ -59,7 +59,8 @@ void schedule(task *t){
     return;
   }
   
-  tasks[num_tasks] = *t;
+  kmemcpy(&tasks[num_tasks], t, sizeof(task));
+  /*tasks[num_tasks] = *t;*/
   cur_task = num_tasks;
   num_tasks++;
   cur_task_p = &tasks[cur_task];

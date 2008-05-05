@@ -4,9 +4,31 @@
 #include "types.h"
 
 typedef struct task{
-  void* stack;
-  uint32 stack_len;
-  uint32* stack_p;
+  /* registers */
+  uint32 gs;
+  uint32 fs;
+  uint32 es;
+  uint32 ds;
+  /* registers below appear in order of pusha */
+  uint32 edi;
+  uint32 esi;
+  uint32 ebp;
+  uint32 esp_h;
+  uint32 ebx;
+  uint32 edx;
+  uint32 ecx;
+  uint32 eax;
+  /* following is the layout of the handlers stack
+     following an interrupt */
+  uint32 eip;
+  uint32 cs;
+  uint32 eflags;
+  uint32 esp;
+  uint32 ss;
+
+  void* stack; 			/* task's stack */
+  uint32 stack_len;		/* size of stack */
+
 } task;
 
 void sched_init();

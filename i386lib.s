@@ -11,6 +11,7 @@ extern	sched_int
 extern	cur_task_p
 extern  pic_eoi
 extern	ksyscall
+extern	tss_p
 	
 global	outb
 global	inb
@@ -29,6 +30,7 @@ global	LIDTR
 global	cmd_hlt
 global	restart_task
 global	get_eflags
+global	GOS_BOTTOM_STACK
 
 outb:
 	push	ebp
@@ -83,13 +85,26 @@ get_eflags:
 	add	esp, 4
 	ret
 
-%define	stack_p	8
+%define	STACK_TOP	68
+%define TSS_ESP0	4
+%define	TSS_SS0		8
 
+	
+;; restart_task(task*);
 restart_task:
 	push	ebp
 	mov	ebp, esp
-	mov	eax, [ebp + 8]
-	mov	esp, [eax + stack_p]
+	
+	mov	eax, [cur_task_p]
+	add	eax, STACK_TOP
+	mov	ecx, [tss_p]
+	mov	[ecx + TSS_ESP0], eax
+
+	mov	esp, [ebp + 8]
+	pop	gs
+	pop	fs
+	pop	es
+	pop	ds
 	popad
 	sti
 	iretd
@@ -110,28 +125,40 @@ KEYBOARD_INT:
 	
 TIMER_INT:
 	cli
-	pushad
-	mov	eax, [cur_task_p]
-	mov	[eax + stack_p], esp
+	pusha
+	push	ds
+	push	es
+	push	fs
+	push	gs
+	
+	mov	esp, GOS_BOTTOM_STACK
+	
 	call	pic_eoi		; controller eoi
 	call	sched_int	; call sched_int at each timer tick
-	popad			; we'll never actually get here, 
+				; we'll never actually get here, 
 				; as the task will have been switched and started in the call to sched_int
-	sti
-	iretd
+hang: 
+	jmp	hang
 	
 SYSCALL_INT:
 	cli
-	pushad
+	pusha
+	push	ds
+	push	es
+	push	fs
+	push	gs
+	
+	mov	esp, GOS_BOTTOM_STACK
+	
 	push	edx		; syscall parameters were passed in regiters
 	push	ecx
 	push	ebx
 	push	eax
 	call	ksyscall
 	add	esp, 16		; pop 4 syscall parameters off stack
-	popad
-	sti
-	iretd
+	
+	push	dword [cur_task_p]
+	call	restart_task
 	
 MAKE_SYSCALL:
 	push	ebp
@@ -159,3 +186,6 @@ LIDTR:
 	DW	0x7FF		; 256 * 8 - 1 :	 size of idt
 	DD	IDT
 
+GOS_TOP_STACK:
+	TIMES	0x1000 DB 0
+GOS_BOTTOM_STACK:	
