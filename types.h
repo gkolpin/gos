@@ -7,6 +7,7 @@ typedef unsigned short	ushort;
 typedef uint		uint32;
 typedef ushort		uint16;
 typedef uchar		uint8;
+typedef uint32		reg_t;
 
 typedef enum {FALSE=0, TRUE} bool;
 

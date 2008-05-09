@@ -5,6 +5,4 @@
 
 void intvect_init(void);
 
-void cmd_lidt(void*);
-
 #endif

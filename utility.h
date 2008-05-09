@@ -4,5 +4,6 @@
 #include "types.h"
 
 void * kmemcpy(void *dest, const void *src, uint32 n);
+uint32 get_eflags();
 
 #endif

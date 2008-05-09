@@ -1,15 +1,19 @@
+#include "gos.h"
 #include "intvect.h"
 #include "int.h"
 #include "prot.h"
 
 /* define external reference to IDT table */
 extern void IDT;
+extern void LIDTR;
 extern KEYBOARD_INT(void);
 extern TIMER_INT(void);
 extern SYSCALL_INT(void);
 extern GEN_INT(void);
 extern ERR_INT(void);
-extern void LIDTR;
+
+/* defined in i386lib.s */
+extern void cmd_lidt(void*);
 
 /* this is the value for the flags in the first 16 bits  */
 /* of the second double-word of the interrupt gate descriptor */

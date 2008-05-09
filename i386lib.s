@@ -1,7 +1,13 @@
 ;;; Assembly routines for kernel
 
-; outb (port, uint8 data)
-	
+;; void outb (port, uint8 data)
+;; uint8 inb(uint16 port);
+;; void cmd_lidt(descriptor*)
+;; void cmd_litr(uint16 tss_pos);
+;; void cmd_sti();
+;; void cmd_hlt();
+;; void restart_task();
+
 BITS	32
 [section .text]
 	
@@ -13,25 +19,29 @@ extern  pic_eoi
 extern	ksyscall
 extern	tss_p
 	
+;; port I/O
 global	outb
 global	inb
+;; instruction wrappers
+global	cmd_lidt
+global	cmd_sti
+global	cmd_ltr
+global	cmd_hlt
+;; proc
+global	restart_task
+global	GOS_BOTTOM_STACK
+;; misc
+global	get_eflags
+;; IDT
 global 	IDT
 global 	KEYBOARD_INT
 global	TIMER_INT
 global	SYSCALL_INT
-global	MAKE_SYSCALL
-global	cmd_lidt
-global	cmd_sti
-global	cmd_int
-global	cmd_ltr
 global	GEN_INT
 global	ERR_INT
-global	LIDTR
-global	cmd_hlt
-global	restart_task
-global	get_eflags
-global	GOS_BOTTOM_STACK
+global	LIDTR	
 
+;; void outb(uint16 port, uint8 data);
 outb:
 	push	ebp
 	mov	ebp, esp
@@ -41,7 +51,7 @@ outb:
 	pop	ebp
 	ret
 
-
+;; uint8 inb(uint16 port);
 inb:
 	push	ebp
 	mov	ebp, esp
@@ -50,10 +60,18 @@ inb:
 	pop	ebp
 	ret
 	
+;; void cmd_lidt(descriptor*)
+;; load interrupt descriptor table pseudo-descriptor
 cmd_lidt:
-	lidt	[LIDTR]	; memory operand
+	push	ebp
+	mov	ebp, esp
+	mov	eax, [ebp + 8]
+	lidt	[eax]	; memory operand
+	pop	ebp
 	ret
 	
+;; void cmd_ltr(uint16 tss_pos);
+;; load tss descriptor position within gdt
 cmd_ltr:
 	push	ebp
 	mov	ebp, esp
@@ -61,24 +79,21 @@ cmd_ltr:
 	ltr	dx		; load tss register
 	pop	ebp
 	ret
-
-	;; restore interrupts
+	
+;; void cmd_sti();
+;; restore interrupts
 cmd_sti:
 	sti
 	ret
 	
-cmd_int:
-	push	ebp
-	mov	ebp, esp
-	mov	eax, [ebp + 8]
-	int	51
-	pop	ebp
-	ret
-	
+;; void cmd_hlt();
+;; halt the processor while waiting for interrupts
 cmd_hlt:
 	hlt
 	ret
 	
+;; uint32 get_eflags();
+;; returns the current eflags
 get_eflags:
 	pushf
 	mov	eax, [esp]
@@ -90,17 +105,18 @@ get_eflags:
 %define	TSS_SS0		8
 
 	
-;; restart_task(task*);
+;; restart_task();
+;; runs task pointed to by cur_task_p
 restart_task:
 	push	ebp
 	mov	ebp, esp
-	
+		
 	mov	eax, [cur_task_p]
 	add	eax, STACK_TOP
 	mov	ecx, [tss_p]
 	mov	[ecx + TSS_ESP0], eax
 
-	mov	esp, [ebp + 8]
+	mov	esp, [cur_task_p]
 	pop	gs
 	pop	fs
 	pop	es
@@ -160,19 +176,6 @@ SYSCALL_INT:
 	push	dword [cur_task_p]
 	call	restart_task
 	
-MAKE_SYSCALL:
-	push	ebp
-	mov	ebp, esp
-	push	ebx		; callee saved register
-	mov	edx, [ebp + 20]	; pass parameters on the registers
-	mov	ecx, [ebp + 16]
-	mov	ebx, [ebp + 12]
-	mov	eax, [ebp + 8]
-	int	50		; make syscall
-	pop	ebx
-	pop	ebp
-	ret
-
 GEN_INT:
 	iretd
 	

@@ -14,20 +14,25 @@ bootloader: bootloader.s patch_boot kern_img count_blocks
 	nasm -f bin bootloader.s
 	./patch_boot bootloader `./count_blocks kern_img 512`
 
-kern_img: i386.s kernel.o i386lib.o
+kern_img: i386.s kernel.o i386lib.o testproc_lib.o
 	nasm -f elf -o i386.o i386.s
-	ld -N -e START -Ttext 0x10000 -o kern_img.out i386.o kernel.o i386lib.o
+	ld -N -e START -Ttext 0x10000 -o kern_img.out i386.o kernel.o i386lib.o \
+		testproc_lib.o
 	objdump	-S kern_img.out > kern_img.asm
 	objcopy -S -O binary kern_img.out kern_img
 
 i386lib.o: i386lib.s 
 	nasm -f elf -o i386lib.o i386lib.s
 
+testproc_lib.o: testproc_lib.s
+	nasm -f elf -o testproc_lib.o testproc_lib.s
+
 kernel.o: kern_start.c console.c kprintf.c i386lib.o keyboard.c 8259_pic.c\
-	 intvect.c ksignal.c mm.c prot.c sched.c syscall.c utility.c
+	 intvect.c ksignal.c mm.c prot.c sched.c syscall.c utility.c testproc.c \
+	testproc_lib.o task.c
 	gcc -o kernel.o -c -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 kern_start.c \
 		console.c kprintf.c keyboard.c 8259_pic.c intvect.c ksignal.c mm.c \
-		prot.c sched.c syscall.c utility.c
+		prot.c sched.c syscall.c utility.c testproc.c task.c
 
 c.img: bootloader kern_img bootblock
 	dd if=bootblock count=1 of=c.img conv=notrunc
