@@ -19,8 +19,8 @@ void prot_init(gdt_entry *gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
 PRIVATE void init_tss_desc(gdt_entry *tss_desc, void* tss, uint32 tss_pos){
   //uint32 tss_addr = (uint32)tss_desc;
   uint32 tss_addr = (uint32)tss;
-  uint16 *dword1 = (uint16*)&tss_desc->dword1;
-  uint8 *dword2 = (uint8*)&tss_desc->dword2;
+  uint16 *dword1 = (uint16*)&tss_desc->dwords[0];
+  uint8 *dword2 = (uint8*)&tss_desc->dwords[1];
 
   dword1[0] = 0x67;		/* limit */
   dword1[1] = tss_addr & 0xFFFF; 	/* 0:15 of base address */
