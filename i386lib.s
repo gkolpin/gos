@@ -1,7 +1,9 @@
 ;;; Assembly routines for kernel
 
-;; void outb (port, uint8 data)
+;; void outb (uint16 port, uint8 data)
 ;; uint8 inb(uint16 port);
+;; void outs (uint16 port, word_t* data, uint32 size);
+;; void ins (uint16 port, word_t* buf, uint32 size);
 ;; void cmd_lidt(descriptor*)
 ;; void cmd_litr(uint16 tss_pos);
 ;; void cmd_sti();
@@ -22,6 +24,8 @@ extern	tss_p
 ;; port I/O
 global	outb
 global	inb
+global  ins
+global	outs
 ;; instruction wrappers
 global	cmd_lidt
 global	cmd_sti
@@ -60,6 +64,39 @@ inb:
 	pop	ebp
 	ret
 	
+;; void outs(uint16 port, word_t* data, uint32 size);
+outs:
+	push	ebp
+	mov	ebp, esp
+	push	esi		; save esi
+	cld			; clear direction flag (ESI gets incremented)
+	mov	ecx, [ebp + 16]	; number of times to repeat outsw command
+	mov	esi, [ebp + 12]	; data address
+	mov	dx, [ebp + 8]	; port
+	
+    rep outsw			; repeat outsw ecx times
+
+	pop	esi
+	pop	ebp
+	ret
+	
+;; void ins (uint16 port, word_t* buf, uint32 size);
+ins:
+	push	ebp
+	mov	ebp, esp
+	push	edi		; save edi
+	cld			; clear direction flag (EDI gets incremented)
+	mov	ecx, [ebp + 16]	; number of times to repeat insw command
+	mov	edi, [ebp + 12]	; buffer address
+	mov	dx, [ebp + 8]	; port
+	
+    rep insw			; repeat insw ecx times
+
+	pop	edi
+	pop	ebp
+	ret
+
+
 ;; void cmd_lidt(descriptor*)
 ;; load interrupt descriptor table pseudo-descriptor
 cmd_lidt:
