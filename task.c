@@ -2,6 +2,7 @@
 #include "types.h"
 #include "gos.h"
 #include "prot.h"
+#include "mm.h"
 
 #define DEFAULT_STACK_SIZE 0x1000
 

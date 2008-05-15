@@ -29,10 +29,10 @@ testproc_lib.o: testproc_lib.s
 
 kernel.o: kern_start.c console.c kprintf.c i386lib.o keyboard.c 8259_pic.c\
 	 intvect.c ksignal.c mm.c prot.c sched.c syscall.c utility.c testproc.c \
-	testproc_lib.o task.c
+	testproc_lib.o task.c at_disk_driver.c
 	gcc -o kernel.o -c -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 kern_start.c \
 		console.c kprintf.c keyboard.c 8259_pic.c intvect.c ksignal.c mm.c \
-		prot.c sched.c syscall.c utility.c testproc.c task.c
+		prot.c sched.c syscall.c utility.c testproc.c task.c at_disk_driver.c
 
 c.img: bootloader kern_img bootblock
 	dd if=bootblock count=1 of=c.img conv=notrunc
