@@ -12,12 +12,14 @@
 #include "sched.h"
 #include "mm.h"
 #include "testproc.h"
+#include "at_disk_driver.h"
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
 
 void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
   int i;
   char input[3] = {'\0', '\n', '\0'};
+  uint8 hd_input_buf[512];
 
   kern_init(extended_mem, gdt, gdt_size, tss_pos, tss);
   
@@ -28,6 +30,11 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   kprint_int(gdt_size);
   kprintf("\n");
   kprint_int(tss_pos);
+  kprintf("\n");
+
+  /*kprintf("FS_INDEX: ");
+  disk_read_sector(1000, hd_input_buf);
+  kprint_int(hd_input_buf[0]);*/
 
   /*while (TRUE){
     cons_putchar(getchar());
@@ -67,6 +74,7 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   kprintf("sched_initted\n");
   prot_init(gdt, gdt_size, tss_pos, tss);
   kprintf("prot_initted\n");
+  hd_driver_init();
 }
 
 void kb_int(void){

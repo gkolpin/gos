@@ -34,7 +34,19 @@ kernel.o: kern_start.c console.c kprintf.c i386lib.o keyboard.c 8259_pic.c\
 		console.c kprintf.c keyboard.c 8259_pic.c intvect.c ksignal.c mm.c \
 		prot.c sched.c syscall.c utility.c testproc.c task.c at_disk_driver.c
 
-c.img: bootloader kern_img bootblock
+testproc.o: testproc.c
+	gcc -o testproc.o -c testproc.c
+
+testproc: testproc.o testproc_lib.o
+	ld -N -e proc1 -Ttext 0x100000 -o testproc.tmp testproc.o testproc_lib.o
+	objcopy -S -O binary testproc.tmp testproc
+
+fs_index: fs_format testproc
+	./fs_format fs_index testproc
+
+c.img: bootloader kern_img bootblock fs_index testproc
 	dd if=bootblock count=1 of=c.img conv=notrunc
 	dd if=bootloader count=`./count_blocks bootloader 512` seek=1 of=c.img conv=notrunc
 	dd if=kern_img count=`./count_blocks kern_img 512` seek=128 of=c.img conv=notrunc
+	cat fs_index testproc > fs.img
+	dd if=fs.img count=`./count_blocks fs.img 512` seek=1000 of=c.img conv=notrunc
