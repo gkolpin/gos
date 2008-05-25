@@ -13,6 +13,7 @@
 #include "mm.h"
 #include "testproc.h"
 #include "at_disk_driver.h"
+#include "simple_fs.h"
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
 
@@ -20,6 +21,7 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   int i;
   char input[3] = {'\0', '\n', '\0'};
   uint8 hd_input_buf[512];
+  byte_t *prog1buf;
 
   kern_init(extended_mem, gdt, gdt_size, tss_pos, tss);
   
@@ -43,10 +45,17 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   //cmd_int(33);
   //cmd_int(33);
 
-  task * t1 = create_task(proc1);
+  /*  task * t1 = create_task(proc1);
   task * t2 = create_task(proc2);
   schedule(t1);
-  schedule(t2);
+  schedule(t2);*/
+
+  prog1buf = (byte_t*)malloc(get_file_size(0));
+  load_file(0, prog1buf);
+  kprintf("\n");
+  kprint_int((uint32)prog1buf);
+  task * t1 = create_task(prog1buf);
+  schedule(t1);
 
   sched_int();
 

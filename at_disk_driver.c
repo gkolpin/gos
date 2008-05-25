@@ -26,8 +26,6 @@
 #define HD_HEAD 0x1F6
 /* LBA flags */
 #define LBA_FLAGS 0xE0 
-/* sector size */
-#define HD_SECTOR_SIZE 512
 /* device info command */
 #define HD_DEV_INFO 0xEC
 /* read multiple sectors, with retries command */

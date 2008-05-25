@@ -15,7 +15,7 @@
 #define FILENAME 1
 #define SECTOR_SIZE 512
 #define ENTRIES_LOC 0
-#define SECTOR_START 201
+#define SECTOR_START 1001
 
 /* arguments to this will be names of binary program files */
 int main(int argc, char **argv){
@@ -32,6 +32,7 @@ int main(int argc, char **argv){
        argv_i++, buf_loc += 2, num_entries++){
     buf[buf_loc] = cur_sect;
     buf[buf_loc + 1] = atoi(argv[argv_i]);
+    cur_sect += buf[buf_loc + 1];
   }
 
   buf[ENTRIES_LOC] = num_entries;
