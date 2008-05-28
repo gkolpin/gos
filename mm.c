@@ -25,7 +25,7 @@ PRIVATE int allocate_pages(int required_pages);
 PRIVATE void set_node(mem_list_node *node, mem_list_node *next, uint32 start, 
 		      uint32 amnt, bool free, bool in_use);
 PRIVATE uint32 bytes_to_pages(uint32 bytes);
-PRIVATE int find_slot_of_size(uint32 pages);
+PRIVATE int find_free_slot_of_size(uint32 pages);
 PRIVATE int find_unused_slot();
 
 
@@ -44,7 +44,7 @@ PRIVATE uint32 get_addr_of_page(uint32 page_no){
 }
 
 PRIVATE int allocate_pages(int required_pages){
-  int slot_no = find_slot_of_size(required_pages);
+  int slot_no = find_free_slot_of_size(required_pages);
   mem_list_node *slot = &node_slots[slot_no];
   int unused_slot_no;
   mem_list_node *unused_slot;
@@ -100,10 +100,10 @@ PRIVATE uint32 bytes_to_pages(uint32 bytes){
   return base_pages;  
 }
 
-PRIVATE int find_slot_of_size(uint32 pages){
+PRIVATE int find_free_slot_of_size(uint32 pages){
   int i;
   for (i = 0; i < NO_MEM_NODES; i++){
-    if (!node_slots[i].in_use &&
+    if (node_slots[i].in_use &&
 	node_slots[i].free &&
 	node_slots[i].amnt >= pages){
 	
