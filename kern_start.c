@@ -14,6 +14,7 @@
 #include "testproc.h"
 #include "at_disk_driver.h"
 #include "simple_fs.h"
+#include "vm.h"
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
 
@@ -25,14 +26,14 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
 
   kern_init(extended_mem, gdt, gdt_size, tss_pos, tss);
   
-  kprint_int(extended_mem);
+  /*kprint_int(extended_mem);
   kprintf("\n");
   kprint_int((uint32)gdt);
   kprintf("\n");
   kprint_int(gdt_size);
   kprintf("\n");
   kprint_int(tss_pos);
-  kprintf("\n");
+  kprintf("\n");*/
 
   /*kprintf("FS_INDEX: ");
   disk_read_sector(1000, hd_input_buf);
@@ -50,9 +51,14 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   schedule(t1);
   schedule(t2);*/
 
-  prog1buf = (byte_t*)malloc(get_file_size(0));
+  kprintf("\nbegin load program\n");
+  //prog1buf = (byte_t*)malloc(get_file_size(0));
+  /* vm map program to 0x100000 (1MB) */
+  prog1buf = (byte_t*)vm_malloc(0x200000, get_file_size(0), USER);
+
+  kprintf("\n"); kprint_int((uint32)prog1buf); kprintf("\n");
   load_file(0, prog1buf);
-  kprintf("\n");
+  kprintf("\nprogram loaded...\n");
   kprint_int((uint32)prog1buf);
   task * t1 = create_task(prog1buf);
   schedule(t1);
@@ -79,6 +85,8 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   kprintf("intvect_initted\n");
   mm_init(extended_mem);
   kprintf("mm_initted\n");
+  vm_init();
+  kprintf("vm_initted\n");
   sched_init();
   kprintf("sched_initted\n");
   prot_init(gdt, gdt_size, tss_pos, tss);

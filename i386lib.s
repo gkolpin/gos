@@ -9,6 +9,8 @@
 ;; void cmd_sti();
 ;; void cmd_hlt();
 ;; void restart_task();
+;; void load_cr3(uint32 pdb_addr);
+;; void enable_paging();
 
 BITS	32
 [section .text]
@@ -31,6 +33,8 @@ global	cmd_lidt
 global	cmd_sti
 global	cmd_ltr
 global	cmd_hlt
+global  load_cr3
+global	enable_paging
 ;; proc
 global	restart_task
 global	GOS_BOTTOM_STACK
@@ -129,6 +133,24 @@ cmd_hlt:
 	hlt
 	ret
 	
+;; void load_cr3(uint32 base_addr);
+;; load register cr3 with the page directory base address
+load_cr3:
+	push	ebp
+	mov	ebp, esp
+	mov	eax, [ebp + 8]
+	mov	cr3, eax
+	pop	ebp
+	ret
+	
+;; void enable_paging();
+;; set bit 31 of CR0 to enable paging
+enable_paging:
+	mov	eax, cr0
+	or	eax, 0x80000000
+	mov	cr0, eax
+	ret
+
 ;; uint32 get_eflags();
 ;; returns the current eflags
 get_eflags:

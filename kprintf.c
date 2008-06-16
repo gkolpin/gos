@@ -1,6 +1,9 @@
+#include "gos.h"
 #include "kprintf.h"
 #include "console.h"
 #include "types.h"
+
+PRIVATE void kprint_int_recurse(int);
 
 void kprintf(const char* string){
   int i;
@@ -13,12 +16,17 @@ void kprintf(const char* string){
 }
 
 void kprint_int(int n){
+  kprint_int_recurse(n);
+  kprintf("\n");
+}
+
+PRIVATE void kprint_int_recurse(int n){
   if (n <= 9){
     cons_putchar('0' + n);
     return;
   }
 
-  kprint_int(n / 10);
+  kprint_int_recurse(n / 10);
 
   cons_putchar('0' + (n % 10));
 }

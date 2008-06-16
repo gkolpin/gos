@@ -29,17 +29,17 @@ testproc_lib.o: testproc_lib.s
 
 kernel.o: kern_start.c console.c kprintf.c i386lib.o keyboard.c 8259_pic.c\
 	 intvect.c ksignal.c mm.c prot.c sched.c syscall.c utility.c testproc.c \
-	testproc_lib.o task.c at_disk_driver.c simple_fs.c
+	testproc_lib.o task.c at_disk_driver.c simple_fs.c vm.c
 	gcc -o kernel.o -c -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 kern_start.c \
 		console.c kprintf.c keyboard.c 8259_pic.c intvect.c ksignal.c mm.c \
 		prot.c sched.c syscall.c utility.c testproc.c task.c at_disk_driver.c \
-		simple_fs.c
+		simple_fs.c vm.c
 
 testproc.o: testproc.c
 	gcc -o testproc.o -c testproc.c
 
 testproc: testproc.o testproc_lib.o
-	ld -N -e proc1 -Ttext 0x100000 -o testproc.tmp testproc.o testproc_lib.o
+	ld -N -e proc1 -Ttext 0x200000 -o testproc.tmp testproc.o testproc_lib.o
 	objdump -S testproc.tmp > testproc.asm
 	objcopy -S -O binary testproc.tmp testproc
 

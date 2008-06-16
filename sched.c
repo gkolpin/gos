@@ -5,6 +5,7 @@
 #include "kprintf.h"
 #include "utility.h"
 #include "task.h"
+#include "vm.h"
 
 #define NUM_TASKS 2
 
@@ -40,6 +41,10 @@ void schedule(task *t){
 void sched_int(){
   cur_task = (cur_task + 1) % num_tasks;
   cur_task_p = &tasks[cur_task];
+
+  /* map task into memory */
+  /* for now tasks are mapped at memory address 0x100000 */
+  //vm_malloc(0x100, 0x800);	/* size is 2KB */
 
   restart_task(cur_task_p);
 }

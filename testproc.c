@@ -3,6 +3,7 @@
 
 PRIVATE void _printf(const char* string);
 PRIVATE void _print_int(int n);
+PRIVATE void _cons_putchar(char c);
 
 void proc1(){
   int i = 0;
