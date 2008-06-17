@@ -10,6 +10,8 @@
 #define PDE_SW 0x1B
 /* user, write flags */
 #define PDE_UW 0x1F
+/* user, read-only flags */
+#define PDE_UR 0x1D
 /* flags mask */
 #define FLAGS_MASK 0xFFF
 /* page dir entry mask */
@@ -53,7 +55,7 @@ void vm_init(){
 
   /* map pag_dir into vm */
   map_pages((uint32)pdb / PAGE_SIZE, (uint32)pdb / PAGE_SIZE,
-	    1, PDE_SW);
+	    1, PDE_UR);
 
   /* identity map first MB of pages for kernel */
   map_pages(0, 0, KERNEL_THRESHOLD / PAGE_SIZE, PDE_SW);
@@ -106,13 +108,13 @@ PRIVATE void create_table_entries(uint32 page_dir_index, uint32 page_table_index
     kprint_int((uint32)new_page_addr);
     new_page_no = new_page_addr >> PAGE_TABLE_BIT_SHIFT;
 
-    page_dir[page_dir_index] = create_entry(new_page_no, flags);
+    page_dir[page_dir_index] = create_entry(new_page_no, PDE_UW);
     map_pages((uint32)new_page_addr / PAGE_SIZE,
-	      (uint32)new_page_addr / PAGE_SIZE, 1, PDE_SW);
+	      (uint32)new_page_addr / PAGE_SIZE, 1, PDE_UR);
 
     new_page_table = (PAGE_DIR)new_page_addr;
     /* make page DIRECTORY entries have user privilege level */
-    new_page_table[page_table_index] = create_entry(physical_page_no, PDE_UW);  
+    new_page_table[page_table_index] = create_entry(physical_page_no, PDE_UR);
   } else {
     new_page_table = (PAGE_DIR)(entry_page_no(((entry_t)page_dir[page_dir_index])) << PAGE_TABLE_BIT_SHIFT);
     new_page_table[page_table_index] = create_entry(physical_page_no, flags);
@@ -132,17 +134,17 @@ PRIVATE entry_t create_entry(uint32 loc, uint32 flags){
 void * vm_malloc(uint32 requested_loc, uint32 size, user_type u_type){
   void* phys_mem = (void*)malloc(size);
 
-  uint32 privelege_flags;
+  uint32 privilege_flags;
   if (u_type == SUPERVISOR){
-    privelege_flags = PDE_SW;
+    privilege_flags = PDE_SW;
   }
   else if (u_type == USER){
-    privelege_flags = PDE_UW;
+    privilege_flags = PDE_UW;
   }
 
   map_pages(requested_loc / PAGE_SIZE, ((uint32)phys_mem) / PAGE_SIZE,
 	    size % PAGE_SIZE == 0 ? size / PAGE_SIZE : size / PAGE_SIZE + 1,
-	    privelege_flags);
+	    privilege_flags);
 
   return (void*)requested_loc;
 }

@@ -51,7 +51,7 @@ void intvect_init(void){
       lIDT[i] 	|= ((R0_CODE_S) << 16);
       lIDT[i] 	|= ((uint32)SYSCALL_INT & 0xFFFF);
       lIDT[i+1]	|= ((uint32)SYSCALL_INT & 0xFFFF0000);
-      lIDT[i+1]	|= 0xEE00;	/* descriptor privelege level is 3 */
+      lIDT[i+1]	|= 0xEE00;	/* descriptor privilege level is 3 */
       //lIDT[i+1]	|= 0x8E00;
     }
     else if (i == (8 * 2) || ((i >= 10 * 2) && (i < 15 * 2))){
