@@ -51,15 +51,15 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   schedule(t1);
   schedule(t2);*/
 
-  kprintf("\nbegin load program\n");
+  kprintf("begin load program\n");
   //prog1buf = (byte_t*)malloc(get_file_size(0));
   /* vm map program to 0x100000 (1MB) */
   prog1buf = (byte_t*)vm_malloc(0x200000, get_file_size(0), USER);
 
-  kprintf("\n"); kprint_int((uint32)prog1buf); kprintf("\n");
+  kprintf("%x\n", (uint32)prog1buf);
   load_file(0, prog1buf);
-  kprintf("\nprogram loaded...\n");
-  kprint_int((uint32)prog1buf);
+  kprintf("program loaded...\n");
+  kprintf("%x\n", (uint32)prog1buf);
   task * t1 = create_task(prog1buf);
   schedule(t1);
 

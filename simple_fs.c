@@ -34,8 +34,6 @@ void load_file(uint32 file_id, byte_t* buf){
   uint32 i;
   uint32 offset = get_file_block_offset(file_id);
 
-  kprint_int(offset);
-
   for (i = 0; i < file_blocks; i++){
     disk_read_sector(offset + i, &buf[i * HD_SECTOR_SIZE]);
   }

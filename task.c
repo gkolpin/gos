@@ -28,18 +28,13 @@ task * create_task(void *code_start){
   /* to be popped off by iret */
   task_return->ss = R3_DATA_S;
   task_return->esp = (uint32)(task_return->stack + task_return->stack_len - 1);
-  kprintf("stack loc: \n");
-  kprint_int((uint32)task_return->esp);
-  kprintf("task loc: ");
-  kprint_int((uint32)task_return);
-  kprintf("task + stack size: ");
-  kprint_int(sizeof(task) + DEFAULT_STACK_SIZE);
-  kprintf("task size: ");
-  kprint_int((uint32)sizeof(task));
-  kprintf("stack size: ");
-  kprint_int(DEFAULT_STACK_SIZE);
-  kprintf("top stack - bottom stack: ");
-  kprint_int(task_return->esp - (uint32)task_return->stack);
+  kprintf("stack loc: %x\n", (uint32)task_return->esp);
+  kprintf("task loc: %x\n", (uint32)task_return);
+  kprintf("task + stack size: %d\n", sizeof(task) + DEFAULT_STACK_SIZE);
+  kprintf("task size: %d\n", sizeof(task));
+  kprintf("stack size: %d\n", DEFAULT_STACK_SIZE);
+  kprintf("top stack - bottom stack: %d\n", task_return->esp - 
+	  (uint32)task_return->stack);
   task_return->eflags = get_eflags() | 0x200; /* eflags (ensure interrupts enabled) */
   task_return->cs = R3_CODE_S;	/* cs */
   task_return->eip = (uint32)code_start;	/* eip */

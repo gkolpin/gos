@@ -78,11 +78,6 @@ PRIVATE void map_pages(uint32 virtual_page_no, uint32 physical_page_no,
   uint32 num_pt_entries = (((end_page * PAGE_SIZE) & 
 			    PAGE_TABLE_ENTRY_MASK) >> PAGE_TABLE_BIT_SHIFT);
 
-  kprint_int(num_pd_entries);
-  kprint_int(num_pt_entries);
-  kprint_int(pd_entry_start);
-  kprint_int(pt_entry_start);
-
   uint32 pd_index, pt_index;
   uint32 cur_physical_page = physical_page_no;
 
@@ -105,7 +100,6 @@ PRIVATE void create_table_entries(uint32 page_dir_index, uint32 page_table_index
     kprintf("allocating new page\n");
 
     new_page_addr = (uint32)malloc(PAGE_SIZE);
-    kprint_int((uint32)new_page_addr);
     new_page_no = new_page_addr >> PAGE_TABLE_BIT_SHIFT;
 
     page_dir[page_dir_index] = create_entry(new_page_no, PDE_UW);
