@@ -12,6 +12,10 @@ typedef uint16		word_t;
 typedef uint32		dword_t;
 typedef uint8		byte_t;
 
+typedef int		int32_t;
+
+typedef uint32 		addr32;
+
 typedef union qword_t {
   word_t words[4];
   dword_t dwords[2];
