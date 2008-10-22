@@ -2,14 +2,13 @@
 #include "types.h"
 #include "gos.h"
 #include "prot.h"
-#include "mm.h"
-#include "vm.h"
+#include "kmalloc.h"
 
 #define DEFAULT_STACK_SIZE 0x1000
 
 task * create_task(void *code_start){
   //task *task_return = (task*)malloc(sizeof(task) + DEFAULT_STACK_SIZE);
-  task *task_return = (task*)vm_malloc(0x300000, sizeof(task) + DEFAULT_STACK_SIZE, USER);
+  task *task_return = (task*)kmalloc(sizeof(task) + DEFAULT_STACK_SIZE);
   if (task_return == NULL){
     kprintf("Error allocating memory\n");
   }

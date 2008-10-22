@@ -15,8 +15,10 @@
 #include "at_disk_driver.h"
 #include "simple_fs.h"
 #include "vm.h"
+#include "kmalloc.h"
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
+PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map*);
 
 void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
   int i;
@@ -54,9 +56,16 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   kprintf("begin load program\n");
   //prog1buf = (byte_t*)malloc(get_file_size(0));
   /* vm map program to 0x100000 (1MB) */
-  prog1buf = (byte_t*)vm_malloc(0x200000, get_file_size(0), USER);
+  uint32 prog_size = get_file_size(0) / 4096 + 1;
+  kprintf("file size in bytes: %d\n", get_file_size(0));
+  kprintf("num file pages: %d\n", prog_size);
+  //prog1buf = (byte_t*)kmalloc(prog_size * 4096);
+  prog1buf = alloc_pages(prog_size);
+  prog1buf = vm_alloc_at(prog1buf, 0x200000, prog_size * 4096, USER);
+  kprintf("allocated pages for task\n");
 
-  kprintf("%x\n", (uint32)prog1buf);
+  kprintf("prog1buf: %x\n", (uint32)prog1buf);
+  kprintf("before load_file\n");
   load_file(0, prog1buf);
   kprintf("program loaded...\n");
   kprintf("%x\n", (uint32)prog1buf);
@@ -75,23 +84,41 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
 }
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
+  uint32 mm_start_page_reserved;
+  uint32 mm_no_pages_reserved;
+  mem_map map[128];
+
   pic_init();
-  kprintf("pic_initted\n");
   cons_init();
   kprintf("cons_initted\n");
   kbd_init();
   kprintf("kbd_initted\n");
   intvect_init();
   kprintf("intvect_initted\n");
-  mm_init(extended_mem);
+  retrieve_mem_map(extended_mem, map);
+  mm_init(map,
+	  &mm_start_page_reserved, &mm_no_pages_reserved);
   kprintf("mm_initted\n");
-  vm_init();
+  vm_init(mm_start_page_reserved, mm_no_pages_reserved);
   kprintf("vm_initted\n");
   sched_init();
   kprintf("sched_initted\n");
   prot_init(gdt, gdt_size, tss_pos, tss);
   kprintf("prot_initted\n");
   hd_driver_init();
+}
+
+PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map *map){
+  map[0].next = &map[1];
+  map[0].page_loc = 0;
+  /* first MB of mem reserved for kernel */
+  map[0].pages = 0x100000 / PAGE_SIZE;
+  map[0].reserved = TRUE;
+
+  map[1].next = NULL;
+  map[1].page_loc = 0x100000 / PAGE_SIZE;
+  map[1].pages = extended_mem * 0x400 /* 1024 */ / PAGE_SIZE;
+  map[1].reserved = FALSE;
 }
 
 void kb_int(void){

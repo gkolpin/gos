@@ -1,6 +1,7 @@
 #include "vm.h"
 #include "gos.h"
 #include "types.h"
+#include "mm.h"
 
 /* number of page directory and table entries */
 #define NUM_ENTRIES (PAGE_SIZE / sizeof(reg_t))
@@ -24,11 +25,32 @@
 #define PAGE_TABLE_BIT_SHIFT 12
 /* empty page entry */
 #define EMPTY_PAGE 0
+/* kernel heap starts at 3GB */
+#define KERNEL_HEAP_START 0xC0000000
+/* user mem starts at 1MB */
+#define USER_HEAP_START KERNEL_THRESHOLD
+/* vm map starts at 3GB - slot 768 */
+#define VM_MAP_SLOT 768
+/* vm map size - 4MB for page tables plus 1KB for page dir */
+#define VM_MAP_SIZE ((1 << 22) + 0x1000)
+/* page directory virtual memory location */
+#define PAGE_DIR_VM_LOC ((uint)0 - 4096)
+/* pt_map start address - 4MB from end of address space */
+#define PT_MAP_ADDR ((uint32)0 - ((uint32)1 << 22))
 
 typedef uint32 entry_t;
 typedef entry_t* PAGE_DIR;
 
 PRIVATE PAGE_DIR page_dir;
+PRIVATE PAGE_DIR *pt_map;
+/* start of free space on kernel heap */
+PRIVATE uint32 kern_heap_free_addr = KERNEL_HEAP_START + VM_MAP_SIZE;
+/* start of free space on user heap */
+PRIVATE uint32 user_heap_free_addr = USER_HEAP_START;
+/* kernel virtual mem offset to translate between phys and virt mem */
+PRIVATE uint32 kern_virt_mem_offset = 0;
+
+PRIVATE bool paging_enabled = FALSE;
 
 /* defined in i386lib.s */
 void load_cr3(uint32);
@@ -40,28 +62,57 @@ PRIVATE void create_table_entries(uint32 page_dir_index, uint32 page_table_index
 PRIVATE void map_pages(uint32 virtual_page_no, uint32 physical_page_no, 
 		       uint32 no_pages, uint32 flags);
 PRIVATE uint32 entry_page_no(entry_t);
+PRIVATE void print_page_table();
 
-void vm_init(){
-  /* set up page tables - initially, the kernel will be mapped to the
-     first MB of virtual memory */
+void vm_init(uint32 start_reserved_kernel_page, uint32 no_reserved_kernel_pages){
+  int i;
   
   /* allocate one page for the page directory */
-  /* malloc will always give page-aligned memory */
-  void *pdb = (void*)malloc(PAGE_SIZE);
+  /* alloc_pages will always give page-aligned memory */
+  page_dir = (PAGE_DIR)alloc_pages(1);
+  bzero(page_dir, PAGE_SIZE);
+  load_cr3((uint32)page_dir);
 
-  page_dir = (PAGE_DIR)pdb;
-  bzero(pdb, PAGE_SIZE);
-  load_cr3((uint32)pdb);
+  /* map the page dir onto itself - after doing this  */
+  /* we'll be able to reference the page directory by  */
+  /* pointing to the top KB of mem. */
+  page_dir[NUM_ENTRIES - 1] = create_entry((uint32)page_dir / PAGE_SIZE, PDE_UR);
+  
+  /* set up pt_map */
+  pt_map = (PAGE_DIR*)alloc_pages(1);
+  for (i = 0; i < NUM_ENTRIES - 1; i++){
+    pt_map[i] = (PAGE_DIR)(PT_MAP_ADDR + i * PAGE_SIZE);
+  }
 
-  /* map pag_dir into vm */
-  map_pages((uint32)pdb / PAGE_SIZE, (uint32)pdb / PAGE_SIZE,
-	    1, PDE_UR);
+  map_pages((KERNEL_HEAP_START + (uint32)pt_map) / PAGE_SIZE, 
+	    (uint32)pt_map / PAGE_SIZE,
+	    1, PDE_SW);
 
   /* identity map first MB of pages for kernel */
   map_pages(0, 0, KERNEL_THRESHOLD / PAGE_SIZE, PDE_SW);
 
+  map_pages(start_reserved_kernel_page,
+	    start_reserved_kernel_page,
+	    no_reserved_kernel_pages, PDE_SW);
+
+  kprintf("enable paging\n");
+  print_page_table();
+
   /* set bit 31 of CR0 register to enable paging */
   enable_paging();
+
+  paging_enabled = TRUE;
+  kern_virt_mem_offset = KERNEL_HEAP_START;
+  page_dir = (PAGE_DIR)PAGE_DIR_VM_LOC;
+  pt_map = (PAGE_DIR*)kern_phys_to_virt(pt_map);
+}
+
+/*uint32 kern_heap_virt_addr_start(){
+  return kern_heap_free_addr;
+  }*/
+
+void* kern_phys_to_virt(void* phys_addr){
+  return (void*)((uint32)phys_addr + kern_virt_mem_offset);
 }
 
 PRIVATE void map_pages(uint32 virtual_page_no, uint32 physical_page_no, 
@@ -90,28 +141,40 @@ PRIVATE void map_pages(uint32 virtual_page_no, uint32 physical_page_no,
   }
 }
 
+PRIVATE PAGE_DIR allocate_new_pt(uint32 page_dir_index){
+  uint32 newpt_page_no;
+
+  kprintf("allocating new_pt\n");
+
+  newpt_page_no = ((uint32)alloc_pages(1)) >> PAGE_TABLE_BIT_SHIFT;
+  page_dir[page_dir_index] = create_entry(newpt_page_no, PDE_UW);
+
+  if (paging_enabled){
+    return pt_map[page_dir_index];
+  } else {
+    return (PAGE_DIR)(newpt_page_no << PAGE_TABLE_BIT_SHIFT);
+  }
+}
+
 PRIVATE void create_table_entries(uint32 page_dir_index, uint32 page_table_index,
 				  uint32 physical_page_no, uint32 flags){
   uint32 new_page_addr;
   uint32 new_page_no;
-  PAGE_DIR new_page_table;
+  PAGE_DIR new_pt;
 
   if (page_dir[page_dir_index] == EMPTY_PAGE){
-    kprintf("allocating new page\n");
-
-    new_page_addr = (uint32)malloc(PAGE_SIZE);
-    new_page_no = new_page_addr >> PAGE_TABLE_BIT_SHIFT;
-
-    page_dir[page_dir_index] = create_entry(new_page_no, PDE_UW);
-    map_pages((uint32)new_page_addr / PAGE_SIZE,
-	      (uint32)new_page_addr / PAGE_SIZE, 1, PDE_UR);
-
-    new_page_table = (PAGE_DIR)new_page_addr;
-    /* make page DIRECTORY entries have user privilege level */
-    new_page_table[page_table_index] = create_entry(physical_page_no, PDE_UR);
+    new_pt = allocate_new_pt(page_dir_index);
+    bzero(new_pt, PAGE_SIZE);
+    new_pt[page_table_index] = create_entry(physical_page_no, flags);
   } else {
-    new_page_table = (PAGE_DIR)(entry_page_no(((entry_t)page_dir[page_dir_index])) << PAGE_TABLE_BIT_SHIFT);
-    new_page_table[page_table_index] = create_entry(physical_page_no, flags);
+    if (paging_enabled){
+      kprintf("pdi: %d, pti: %d\n", page_dir_index, page_table_index);
+      kprintf("pt_map[page_dir_index]: %x\n", (uint32)pt_map[page_dir_index]);
+      pt_map[page_dir_index][page_table_index] = create_entry(physical_page_no, flags);
+    } else {
+      new_pt = (PAGE_DIR)(entry_page_no(page_dir[page_dir_index]) << PAGE_TABLE_BIT_SHIFT);
+      new_pt[page_table_index] = create_entry(physical_page_no, flags);
+    }
   }
 }
 
@@ -125,8 +188,8 @@ PRIVATE entry_t create_entry(uint32 loc, uint32 flags){
   return (entry_t)loc;
 }
 
-void * vm_malloc(uint32 requested_loc, uint32 size, user_type u_type){
-  void* phys_mem = (void*)malloc(size);
+void * vm_alloc_at(void * phys_addr, uint32 requested_loc, uint32 size, user_type u_type){
+  //void* phys_mem = (void*)malloc(size);
 
   uint32 privilege_flags;
   if (u_type == SUPERVISOR){
@@ -136,9 +199,55 @@ void * vm_malloc(uint32 requested_loc, uint32 size, user_type u_type){
     privilege_flags = PDE_UW;
   }
 
-  map_pages(requested_loc / PAGE_SIZE, ((uint32)phys_mem) / PAGE_SIZE,
+  map_pages(requested_loc / PAGE_SIZE, ((uint32)phys_addr) / PAGE_SIZE,
 	    size % PAGE_SIZE == 0 ? size / PAGE_SIZE : size / PAGE_SIZE + 1,
 	    privilege_flags);
 
   return (void*)requested_loc;
 }
+
+void print_page_table(){
+  int pdIndex, ptIndex;
+  uint32 ptPageLoc;
+  PAGE_DIR curPageTable;
+  bool started = FALSE;
+  uint32 virtMemStart, virtMemEnd, physMemStart, physMemEnd;
+  kprintf("**** start page table output ****\n");
+  for (pdIndex = 0; pdIndex < 1024; pdIndex++){
+    if (page_dir[pdIndex] != 0){
+      ptPageLoc = entry_page_no(page_dir[pdIndex]);
+      ptPageLoc <<= 12;
+      curPageTable = (PAGE_DIR)kern_phys_to_virt((void*)ptPageLoc);
+      for (ptIndex = 0; ptIndex < 1024; ptIndex++){
+	if (curPageTable[ptIndex] != 0 && !started){
+	  started = TRUE;
+	  virtMemStart = pdIndex * (1 << 22) + ptIndex * (1 << 12);
+	  physMemStart = entry_page_no(curPageTable[ptIndex]) << 12;
+	} else if (curPageTable[ptIndex] == 0 && started){
+	  started = FALSE;
+	  virtMemEnd = pdIndex * (1 << 22) + ptIndex * (1 << 12) - 1;
+	  physMemEnd = physMemStart + (virtMemEnd - virtMemStart);
+	  kprintf("%x - %x  ->  %x - %x\n", virtMemStart, virtMemEnd, 
+		  physMemStart, physMemEnd);
+	}
+      }
+    } 
+  }
+  kprintf("**** end page table ****\n");
+}
+
+/*void * vm_malloc(uint32 size, user_type u_type){
+  void *return_val;
+
+  if (u_type == SUPERVISOR){
+    return_val = vm_malloc_at(kern_heap_free_addr, size, u_type);
+    kern_heap_free_addr += (size % PAGE_SIZE == 0 ? size / PAGE_SIZE : size / PAGE_SIZE + 1);
+  }
+  else {
+    return_val = vm_malloc_at(user_heap_free_addr, size, u_type);
+    user_heap_free_addr += (size % PAGE_SIZE == 0 ? size / PAGE_SIZE : size / PAGE_SIZE + 1);
+  }
+
+  return return_val;
+}
+*/
