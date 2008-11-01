@@ -2,6 +2,7 @@
 #include "gos.h"
 #include "types.h"
 #include "mm.h"
+#include "kprintf.h"
 
 /* number of page directory and table entries */
 #define NUM_ENTRIES (PAGE_SIZE / sizeof(reg_t))
@@ -25,8 +26,6 @@
 #define PAGE_TABLE_BIT_SHIFT 12
 /* empty page entry */
 #define EMPTY_PAGE 0
-/* kernel heap starts at 3GB */
-#define KERNEL_HEAP_START 0xC0000000
 /* user mem starts at 1MB */
 #define USER_HEAP_START KERNEL_THRESHOLD
 /* vm map starts at 3GB - slot 768 */

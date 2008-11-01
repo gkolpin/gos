@@ -5,6 +5,8 @@
 
 /* Using 4kb pages. */
 #define PAGE_SIZE 4096
+/* kernel heap starts at 3GB */
+#define KERNEL_HEAP_START 0xC0000000
 
 typedef enum user_type {
   SUPERVISOR,

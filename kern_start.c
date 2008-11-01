@@ -16,6 +16,7 @@
 #include "simple_fs.h"
 #include "vm.h"
 #include "kmalloc.h"
+#include "elf_loader.h"
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
 PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map*);
@@ -61,7 +62,7 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   kprintf("num file pages: %d\n", prog_size);
   //prog1buf = (byte_t*)kmalloc(prog_size * 4096);
   prog1buf = alloc_pages(prog_size);
-  prog1buf = vm_alloc_at(prog1buf, 0x200000, prog_size * 4096, USER);
+  prog1buf = kmalloc(prog_size * PAGE_SIZE);
   kprintf("allocated pages for task\n");
 
   kprintf("prog1buf: %x\n", (uint32)prog1buf);
@@ -69,7 +70,8 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   load_file(0, prog1buf);
   kprintf("program loaded...\n");
   kprintf("%x\n", (uint32)prog1buf);
-  task * t1 = create_task(prog1buf);
+
+  task * t1 = create_task_from_elf(prog1buf, prog_size * 4096);
   schedule(t1);
 
   sched_int();

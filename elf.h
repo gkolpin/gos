@@ -198,7 +198,7 @@ typedef struct {
 
 /* Segment types - p_type */
 enum {
-  PT_NULL<
+  PT_NULL,
   PT_LOAD,
   PT_DYNAMIC,
   PT_INTERP,
