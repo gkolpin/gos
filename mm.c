@@ -12,6 +12,7 @@ typedef struct mem_area {
   struct mem_area	*prev;
   uint32		order;
   bool 			isFree;
+  PAGE			page;
 } mem_area;
 
 PRIVATE uint32 max_order;
@@ -69,6 +70,17 @@ void free_pages(void *start_address, uint32 no_pages){
   free_area_add_to(maTemp, order);
 
   coalesce(maTemp, order);
+}
+
+uint32 get_phys_address_for_page(PAGE *page){
+  /* first get the mem_area */
+  uint32 ma_addr = (uint32)page - (uint32)(&((mem_area*)0)->page);
+  return (uint32)get_phys_addr((mem_area*)ma_addr);
+}
+
+PAGE * get_page_struct(void *phys_mem){
+  mem_area *ma = get_slot_for_page(((uint32)phys_mem) / MEM_PAGE_SIZE);
+  return &ma->page;
 }
 
 PRIVATE void coalesce(mem_area *ma, uint32 order){

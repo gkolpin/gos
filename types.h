@@ -1,6 +1,9 @@
 #ifndef _TYPES_H
 #define _TYPES_H
 
+#define BITS_PER_BYTE 8
+#define BITS_PER_UINT32 32
+
 typedef unsigned char 	uchar;
 typedef unsigned int 	uint;
 typedef unsigned short	ushort;

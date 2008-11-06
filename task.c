@@ -6,6 +6,7 @@
 #include "kprintf.h"
 #include "vm.h"
 #include "mm.h"
+#include "utility.h"
 
 /* default stack size is one page */
 #define DEFAULT_STACK_SIZE 1

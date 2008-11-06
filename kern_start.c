@@ -103,6 +103,8 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   kprintf("mm_initted\n");
   vm_init(mm_start_page_reserved, mm_no_pages_reserved);
   kprintf("vm_initted\n");
+  kmalloc_init();
+  kprintf("kmalloc_initted\n");
   sched_init();
   kprintf("sched_initted\n");
   prot_init(gdt, gdt_size, tss_pos, tss);
