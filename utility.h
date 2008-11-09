@@ -5,6 +5,6 @@
 
 void * kmemcpy(void *dest, const void *src, uint32 n);
 uint32 get_eflags();
-uint32 bit_scan_right(uint32);
+uint32 bit_scan_forward(uint32);
 
 #endif

@@ -43,7 +43,6 @@ void * alloc_pages(uint32 no_pages){
   if (free_mem_areas[order] != NULL){
     maTemp = free_mem_areas[order];
     remove_from_free_list(maTemp, order);
-    kprintf("alloc 1: %x\n", get_phys_addr(maTemp));
     return get_phys_addr(maTemp);
   } else {
     cur_order = order;
@@ -52,7 +51,6 @@ void * alloc_pages(uint32 no_pages){
 	split_mem_area_to(cur_order, order);
 	maTemp = free_mem_areas[order];
 	remove_from_free_list(maTemp, order);
-	kprintf("alloc 2: %x\n", get_phys_addr(maTemp));
 	return get_phys_addr(maTemp);
       } 
     }

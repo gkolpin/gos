@@ -4,6 +4,7 @@
 #include "vm.h"
 #include "mm.h"
 #include "utility.h"
+#include "kprintf.h"
 
 #define NUM_OBJ_CACHES 9
 
@@ -22,8 +23,8 @@ PRIVATE uint32 max_size_obj;
 				(PAGE_SIZE / obj_size / BITS_PER_BYTE / obj_size) + \
 				1)
 /* gets the object pointer for the specified index on the slab (page) */
-#define SLOT_DATA(page_data, index_size, index, obj_size) ((void*)&((byte_t*)((uint32)page_data + \
-								index_size))[free_loc * obj_size])
+#define SLOT_DATA(page_data, idx_size, index, obj_size) ((void*)&((byte_t*)((uint32)page_data + \
+								idx_size))[index * obj_size])
 /* returns the size of the index in number of 32 bit entities */
 #define INDEX_SIZE(obj_size) ((PAGE_SIZE / obj_size / BITS_PER_UINT32) + \
 				((PAGE_SIZE / obj_size) % BITS_PER_UINT32 ? \
@@ -34,8 +35,8 @@ PRIVATE void * map_phys_to_kernel_mem(void*, uint32 no_pages);
 PRIVATE void record_allocation(void *, uint32 no_bytes);
 PRIVATE void * add_page(object_cache*);
 PRIVATE void init_page(PAGE*, PAGE *next_page, PAGE *prev_page);
-PRIVATE void * find_free_obj(object_cache*);
-PRIVATE void * find_free_obj_in_page(PAGE *page, uint32 size);
+PRIVATE void * alloc_free_obj(object_cache*);
+PRIVATE void * alloc_free_obj_in_page(PAGE *page, uint32 size);
 PRIVATE void * get_real_page(PAGE *page);
 PRIVATE init_page_index(PAGE *page, uint32 obj_size);
 
@@ -54,10 +55,10 @@ void * kmalloc(uint32 size){
   void *virt_loc = NULL;
   void *phys_loc;
 
-  if (size < max_size_obj){
+  if (size <= max_size_obj){
     /* allocation can be satisfied from one of the caches */
-    phys_loc = get_obj_from_cache(size);
-    virt_loc = map_phys_to_kernel_mem(phys_loc, PAGES_FOR_BYTES(size));
+    kprintf("smaller than max_obj_size\n");
+    virt_loc = get_obj_from_cache(size);
   } else {
     /* need to call alloc_pages directly */
     phys_loc = alloc_pages(PAGES_FOR_BYTES(size));
@@ -86,7 +87,7 @@ PRIVATE void * map_phys_to_kernel_mem(void *phys_mem, uint32 pages){
 PRIVATE object_cache * get_obj_cache_for_size(uint32 size){
   int i;
   for (i = 0; i < NUM_OBJ_CACHES; i++){
-    if (objectCaches[i].size > size){
+    if (size <= objectCaches[i].size){
       return &objectCaches[i];
     }
   }
@@ -100,15 +101,16 @@ PRIVATE void * get_obj_from_cache(uint32 size){
   void *temp;
 
   if (cache->headPage == NULL){
+    kprintf("headPage is null\n");
     add_page(cache);
-    return find_free_obj(cache);
+    return alloc_free_obj(cache);
   } else {
-    temp = find_free_obj(cache);
+    temp = alloc_free_obj(cache);
     if (temp == NULL){
       add_page(cache);
-      return find_free_obj(cache);
+      return alloc_free_obj(cache);
     } else {
-      return NULL;
+      return temp;
     }
   }
 }
@@ -118,6 +120,7 @@ PRIVATE void * add_page(object_cache *cache){
   PAGE *curPage;
   if (cache->headPage == NULL){
     temp = alloc_pages(1);
+    map_phys_to_kernel_mem(temp, 1);
     cache->headPage = get_page_struct(temp);
     init_page(cache->headPage, NULL, NULL);
     init_page_index(cache->headPage, cache->size);
@@ -126,6 +129,7 @@ PRIVATE void * add_page(object_cache *cache){
     for (curPage = cache->headPage; curPage->next_slab != NULL; 
 	 curPage = curPage->next_slab){
       temp = alloc_pages(1);
+      map_phys_to_kernel_mem(temp, 1);
       curPage->next_slab = get_page_struct(temp);
       init_page(curPage->next_slab, NULL, curPage);
       init_page_index(curPage->next_slab, cache->size);
@@ -136,7 +140,8 @@ PRIVATE void * add_page(object_cache *cache){
 
 PRIVATE void * get_real_page(PAGE *page){
   uint32 phys_addr = get_phys_address_for_page(page);
-  return map_phys_to_kernel_mem((void*)phys_addr, 1);
+  //return map_phys_to_kernel_mem((void*)phys_addr, 1);
+  return kern_phys_to_virt((void*)phys_addr);
 }
 
 PRIVATE init_page_index(PAGE *page, uint32 obj_size){
@@ -148,20 +153,24 @@ PRIVATE init_page_index(PAGE *page, uint32 obj_size){
   }
 }
 
-PRIVATE void * find_free_obj(object_cache *cache){
+PRIVATE void * alloc_free_obj(object_cache *cache){
   PAGE *curPage;
   void *obj = NULL;
   for (curPage = cache->headPage; curPage != NULL; curPage = curPage->next_slab){
-    obj = find_free_obj_in_page(curPage, cache->size);
+    obj = alloc_free_obj_in_page(curPage, cache->size);
     if (obj == NULL){
       continue;
+    } else {
+      break;
     }
   }
 
-  return NULL;
+  kprintf("obj: %d\n", (uint32)obj);
+
+  return obj;
 }
 
-PRIVATE void * find_free_obj_in_page(PAGE *page, uint32 obj_size){
+PRIVATE void * alloc_free_obj_in_page(PAGE *page, uint32 obj_size){
   void *page_data = get_real_page(page);
   uint32 *idx = (uint32*)page_data;
   int i;
@@ -173,16 +182,20 @@ PRIVATE void * find_free_obj_in_page(PAGE *page, uint32 obj_size){
       continue;
     }
 
-    free_loc = bit_scan_right(idx[i]);
+    free_loc = bit_scan_forward(idx[i]);
     free_loc += (i * BITS_PER_UINT32);
 
     if (free_loc > PAGE_NO_SLOTS(obj_size)){
       continue;
     }
 
-    idx[i] |= (1 << (BITS_PER_BYTE - free_loc - 1));
+    kprintf("free_loc: %d\n", free_loc);
+    kprintf("uint32: %d\n", idx[i]);
+    kprintf("i: %d\n", i);
+    idx[i] ^= (1 << free_loc);
     return SLOT_DATA(page_data, index_size, free_loc, obj_size);
   }
 
+  kprintf("returning null\n");
   return NULL;
 }

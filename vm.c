@@ -94,7 +94,6 @@ void vm_init(uint32 start_reserved_kernel_page, uint32 no_reserved_kernel_pages)
 	    start_reserved_kernel_page,
 	    no_reserved_kernel_pages, PDE_SW);
 
-  kprintf("enable paging\n");
   print_page_table();
 
   /* set bit 31 of CR0 register to enable paging */
@@ -143,8 +142,6 @@ PRIVATE void map_pages(uint32 virtual_page_no, uint32 physical_page_no,
 PRIVATE PAGE_DIR allocate_new_pt(uint32 page_dir_index){
   uint32 newpt_page_no;
 
-  kprintf("allocating new_pt\n");
-
   newpt_page_no = ((uint32)alloc_pages(1)) >> PAGE_TABLE_BIT_SHIFT;
   page_dir[page_dir_index] = create_entry(newpt_page_no, PDE_UW);
 
@@ -167,8 +164,6 @@ PRIVATE void create_table_entries(uint32 page_dir_index, uint32 page_table_index
     new_pt[page_table_index] = create_entry(physical_page_no, flags);
   } else {
     if (paging_enabled){
-      kprintf("pdi: %d, pti: %d\n", page_dir_index, page_table_index);
-      kprintf("pt_map[page_dir_index]: %x\n", (uint32)pt_map[page_dir_index]);
       pt_map[page_dir_index][page_table_index] = create_entry(physical_page_no, flags);
     } else {
       new_pt = (PAGE_DIR)(entry_page_no(page_dir[page_dir_index]) << PAGE_TABLE_BIT_SHIFT);

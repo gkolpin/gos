@@ -11,7 +11,7 @@
 ;; void restart_task();
 ;; void load_cr3(uint32 pdb_addr);
 ;; void enable_paging();
-;; uint32 bit_scan_right(uint32)
+;; uint32 bit_scan_forward(uint32)
 
 BITS	32
 [section .text]
@@ -41,7 +41,7 @@ global	restart_task
 global	GOS_BOTTOM_STACK
 ;; misc
 global	get_eflags
-global	bit_scan_right
+global	bit_scan_forward
 ;; IDT
 global 	IDT
 global 	KEYBOARD_INT
@@ -153,13 +153,13 @@ enable_paging:
 	mov	cr0, eax
 	ret
 	
-;; uint32 bit_scan_right(uint32)
-;; bit scan right
-bit_scan_right:
+;; uint32 bit_scan_forward(uint32)
+;; bit scan forward
+bit_scan_forward:
 	push	ebp
 	mov	ebp, esp
 	mov	eax, [ebp + 8]
-	bsr	eax, eax
+	bsf	eax, eax
 	pop	ebp
 	ret
 
