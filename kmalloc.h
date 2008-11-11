@@ -6,6 +6,6 @@
 void kmalloc_init();
 /* size is in bytes */
 void * kmalloc(uint32 size);
-void * kfree(void*);
+void kfree(void*);
 
 #endif

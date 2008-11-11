@@ -86,7 +86,7 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
 }
 
 PRIVATE void test_kmalloc(){
-  void *t1, *t2;
+  void *t1, *t2, *t3;
   t1 = kmalloc(32);
   t2 = kmalloc(32);
 
@@ -94,6 +94,18 @@ PRIVATE void test_kmalloc(){
 
   if ((uint32)t2 - (uint32)t1 == 32){
     kprintf("difference is 32\n");
+  }
+
+  kfree(t1);
+  t3 = kmalloc(32);
+  if (t3 == t1){
+    kprintf("t1 is same as t3\n");
+  }
+
+  kfree(t2);
+  t3 = kmalloc(32);
+  if (t3 == t2){
+    kprintf("t3 is the same as t2\n");
   }
 }
 
@@ -117,8 +129,6 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   kprintf("vm_initted\n");
   kmalloc_init();
   kprintf("kmalloc_initted\n");
-  test_kmalloc();
-  while (1);
   sched_init();
   kprintf("sched_initted\n");
   prot_init(gdt, gdt_size, tss_pos, tss);

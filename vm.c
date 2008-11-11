@@ -109,8 +109,12 @@ void vm_init(uint32 start_reserved_kernel_page, uint32 no_reserved_kernel_pages)
   return kern_heap_free_addr;
   }*/
 
-void* kern_phys_to_virt(void* phys_addr){
+void * kern_phys_to_virt(void *phys_addr){
   return (void*)((uint32)phys_addr + kern_virt_mem_offset);
+}
+
+void * kern_virt_to_phys(void *virt_addr){
+  return (void*)((uint32)virt_addr - kern_virt_mem_offset);
 }
 
 PRIVATE void map_pages(uint32 virtual_page_no, uint32 physical_page_no, 

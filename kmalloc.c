@@ -24,7 +24,7 @@ PRIVATE uint32 max_size_obj;
 				1)
 /* gets the object pointer for the specified index on the slab (page) */
 #define SLOT_DATA(page_data, idx_size, index, obj_size) ((void*)&((byte_t*)((uint32)page_data + \
-								idx_size))[index * obj_size])
+								idx_size * sizeof(uint32)))[index * obj_size])
 /* returns the size of the index in number of 32 bit entities */
 #define INDEX_SIZE(obj_size) ((PAGE_SIZE / obj_size / BITS_PER_UINT32) + \
 				((PAGE_SIZE / obj_size) % BITS_PER_UINT32 ? \
@@ -67,6 +67,45 @@ void * kmalloc(uint32 size){
   }
 
   return virt_loc;
+}
+
+void kfree(void *obj){
+  /* search for page that contains the object */
+  int i;
+  object_cache *curCache = NULL;
+  int indexLoc;
+  uint32 *idx;
+  PAGE *curPage;
+  void *physPage;
+
+  for (i = 0; i < NUM_OBJ_CACHES; i++){
+    curCache = &objectCaches[i];
+
+    for (curPage = curCache->headPage; curPage != NULL; curPage = curPage->next_slab){
+      physPage = get_real_page(curPage);
+      if (obj > physPage && (uint32)obj < (uint32)physPage + PAGE_SIZE){
+	indexLoc = ((uint32)obj - (uint32)physPage - INDEX_SIZE(curCache->size)) / curCache->size;
+	kprintf("indexLoc: %d\n", indexLoc);
+	idx = physPage;
+	idx[indexLoc / BITS_PER_UINT32] ^= 
+	  (1 << (indexLoc % BITS_PER_UINT32));
+	goto END_LOOP;
+      }
+    }
+  }
+ END_LOOP:
+  /* loop through index to see if page can be freed */
+  if (curCache != NULL && curPage != NULL){
+    for (i = 0; i < INDEX_SIZE(curCache->size); i++){
+      if (idx[i] != ~(uint32)0){
+	return;
+      }
+    }
+  }
+
+  /* if we get here, our page is empty */
+  physPage = kern_virt_to_phys(physPage);
+  free_pages(physPage, 1);
 }
 
 PRIVATE void init_page(PAGE *page, PAGE *next_page, PAGE *prev_page){
