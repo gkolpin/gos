@@ -13,8 +13,16 @@ typedef struct object_cache {
   PAGE		*headPage;
 } object_cache;
 
+typedef struct alloc_record {
+  void 		*virt_loc;
+  uint		size;
+  struct alloc_record	*next;
+  struct alloc_record	*prev;
+} alloc_record;
+
 PRIVATE object_cache objectCaches[NUM_OBJ_CACHES];
 PRIVATE uint32 max_size_obj;
+PRIVATE alloc_record *alloc_records = NULL;
 
 /* number of pages to allocate for given number of bytes */
 #define PAGES_FOR_BYTES(bytes) ((bytes / PAGE_SIZE) + (bytes % PAGE_SIZE ? 1 : 0))
@@ -39,6 +47,8 @@ PRIVATE void * alloc_free_obj(object_cache*);
 PRIVATE void * alloc_free_obj_in_page(PAGE *page, uint32 size);
 PRIVATE void * get_real_page(PAGE *page);
 PRIVATE init_page_index(PAGE *page, uint32 obj_size);
+PRIVATE bool kfree_large(void*);
+PRIVATE bool kfree_small(void*);
 
 void kmalloc_init(){
   int i;
@@ -63,13 +73,67 @@ void * kmalloc(uint32 size){
     /* need to call alloc_pages directly */
     phys_loc = alloc_pages(PAGES_FOR_BYTES(size));
     virt_loc = map_phys_to_kernel_mem(phys_loc, PAGES_FOR_BYTES(size));
-    //record_allocation(virt_loc, size);
+    record_allocation(virt_loc, size);
   }
 
   return virt_loc;
 }
 
+PRIVATE void record_allocation(void *virt_loc, uint size){
+  alloc_record *record = (alloc_record*)kmalloc(sizeof(record));
+  alloc_record *curRecord;
+
+  record->virt_loc = virt_loc;
+  record->size = size;
+  record->next = NULL;
+  record->prev = NULL;
+
+  if (alloc_records == NULL){
+    alloc_records = record;
+  } else {
+    for (curRecord = alloc_records; curRecord->next != NULL; curRecord = curRecord->next);
+    curRecord->next = record;
+    record->prev = curRecord;
+  }
+}
+
 void kfree(void *obj){
+  bool freed;
+  freed = kfree_small(obj);
+  if (!freed){
+    kfree_large(obj);
+  }
+}
+
+PRIVATE bool kfree_large(void *obj){
+  alloc_record *curRecord;
+  bool retVal = FALSE;
+
+  for (curRecord = alloc_records; curRecord != NULL; curRecord = curRecord->next){
+    if (obj > curRecord->virt_loc && (uint32)obj < ((uint32)curRecord->virt_loc + curRecord->size)){
+      retVal = TRUE;
+      free_pages(kern_virt_to_phys(obj), PAGES_FOR_BYTES(curRecord->size));
+      break;
+    }
+  }
+
+  if (curRecord->prev != NULL){
+    curRecord->prev->next = curRecord->next;
+  }
+  if (curRecord->next != NULL){
+    curRecord->next->prev = curRecord->prev;
+  }
+
+  if (alloc_records == curRecord){
+    alloc_records = curRecord->next;
+  }
+
+  kfree(curRecord);
+
+  return retVal;
+}
+
+PRIVATE bool kfree_small(void *obj){
   /* search for page that contains the object */
   int i;
   object_cache *curCache = NULL;
@@ -77,6 +141,7 @@ void kfree(void *obj){
   uint32 *idx;
   PAGE *curPage;
   void *physPage;
+  bool foundObj = FALSE;
 
   for (i = 0; i < NUM_OBJ_CACHES; i++){
     curCache = &objectCaches[i];
@@ -89,6 +154,7 @@ void kfree(void *obj){
 	idx = physPage;
 	idx[indexLoc / BITS_PER_UINT32] ^= 
 	  (1 << (indexLoc % BITS_PER_UINT32));
+	foundObj = TRUE;
 	goto END_LOOP;
       }
     }
@@ -98,7 +164,7 @@ void kfree(void *obj){
   if (curCache != NULL && curPage != NULL){
     for (i = 0; i < INDEX_SIZE(curCache->size); i++){
       if (idx[i] != ~(uint32)0){
-	return;
+	return foundObj;
       }
     }
   }
@@ -106,6 +172,8 @@ void kfree(void *obj){
   /* if we get here, our page is empty */
   physPage = kern_virt_to_phys(physPage);
   free_pages(physPage, 1);
+
+  return foundObj;
 }
 
 PRIVATE void init_page(PAGE *page, PAGE *next_page, PAGE *prev_page){
