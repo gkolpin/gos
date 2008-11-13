@@ -29,7 +29,6 @@ uint32 no_slots;
 PRIVATE void * get_phys_addr(mem_area*);
 PRIVATE void split_mem_area_to(uint32 cur_order, uint32 requested_order);
 PRIVATE uint32 order_of(uint32);
-PRIVATE void split_mem_area(mem_area*, uint32 order);
 PRIVATE void free_area_add_to(mem_area*, uint32 order);
 PRIVATE mem_area * get_slot_for_page(uint32 page_no);
 PRIVATE void coalesce(mem_area*, uint32 order);

@@ -36,7 +36,7 @@ task * create_task(uint32 task_start_addr, uint32 executable_image_phys_addr,
   
   /* to be popped off by iret */
   task_return->ss = R3_DATA_S;
-  task_return->esp = (uint32)(task_return->stack + task_return->stack_len - 1);
+  task_return->esp = (uint32)((uint32)task_return->stack + task_return->stack_len - 1);
   kprintf("stack loc: %x\n", (uint32)task_return->esp);
   kprintf("task loc: %x\n", (uint32)task_return);
   kprintf("task + stack size: %d\n", sizeof(task) + DEFAULT_STACK_SIZE);

@@ -234,15 +234,14 @@ PRIVATE void * add_page(object_cache *cache){
     return temp;
   } else {
     for (curPage = cache->headPage; curPage->next_slab != NULL; 
-	 curPage = curPage->next_slab){
-      temp = alloc_pages(1);
-      map_phys_to_kernel_mem(temp, 1);
-      curPage->next_slab = get_page_struct(temp);
-      init_page(curPage->next_slab, NULL, curPage);
-      init_page_index(curPage->next_slab, cache->size);
-      return temp;
-    }
-  }  
+	 curPage = curPage->next_slab);
+    temp = alloc_pages(1);
+    map_phys_to_kernel_mem(temp, 1);
+    curPage->next_slab = get_page_struct(temp);
+    init_page(curPage->next_slab, NULL, curPage);
+    init_page_index(curPage->next_slab, cache->size);
+    return temp;
+  }
 }
 
 PRIVATE void * get_real_page(PAGE *page){
