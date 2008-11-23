@@ -7,5 +7,6 @@
 void sched_init();
 void schedule(task*);
 void sched_int();
+task * get_cur_task();
 
 #endif

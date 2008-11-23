@@ -1,5 +1,6 @@
 #include "gos.h"
 #include "types.h"
+#include "syscall.h"
 
 PRIVATE void _printf(const char* string);
 PRIVATE void _print_int(int n);
@@ -15,12 +16,16 @@ void proc1(){
   }
 }
 
-PRIVATE void _make_syscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4){
+PRIVATE uint32 _make_syscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4){
   MAKE_SYSCALL(p1, p2, p3, p4);
 }
 
 PRIVATE void _cons_putchar(char c){
-  _make_syscall(0, c, 0, 0);
+  _make_syscall(CONS_PUTCHAR, c, 0, 0);
+}
+
+PRIVATE int _fork(){
+  _make_syscall(FORK, 0, 0, 0);
 }
 
 PRIVATE void _printf(const char* string){

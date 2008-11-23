@@ -25,6 +25,9 @@ task * create_task(uint32 task_start_addr, uint32 executable_image_phys_addr,
   task_return->executable_file_phys_addr = executable_image_phys_addr;
   task_return->executable_file_size = executable_image_size;
 
+  task_return->prev = NULL;
+  task_return->next = NULL;
+
   /*kprintf("\n");
   kprint_int((uint32)*esp);
   kprintf("\n");*/
@@ -63,4 +66,27 @@ void add_task_segment(task *t, uint32 segment_phys_addr, uint32 segment_data_len
   t->num_segments++;
 
   vm_alloc_at((void*)segment_phys_addr, segment_virt_addr, segment_data_length, USER);
+}
+
+task * create_from_task(task *t){
+  task *newTask;
+  newTask = (task*)kmalloc(sizeof(task));
+
+  kmemcpy(newTask, t, sizeof(task));
+
+  kmemcpy(newTask->stack, t->stack, t->stack_len * PAGE_SIZE);
+
+  return newTask;
+}
+
+void set_syscall_return(task *t, uint32 ret_val){
+  t->eax = ret_val;
+}
+
+uint32 get_id(task *t){
+  return t->id;
+}
+
+void set_id(task *t, uint32 id){
+  t->id = id;
 }
