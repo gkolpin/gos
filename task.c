@@ -74,6 +74,7 @@ task * create_from_task(task *t){
 
   kmemcpy(newTask, t, sizeof(task));
 
+  newTask->stack = kmalloc(t->stack_len * PAGE_SIZE);
   kmemcpy(newTask->stack, t->stack, t->stack_len * PAGE_SIZE);
 
   return newTask;

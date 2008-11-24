@@ -80,7 +80,7 @@ void * kmalloc(uint32 size){
 }
 
 PRIVATE void record_allocation(void *virt_loc, uint size){
-  alloc_record *record = (alloc_record*)kmalloc(sizeof(record));
+  alloc_record *record = (alloc_record*)kmalloc(sizeof(alloc_record));
   alloc_record *curRecord;
 
   record->virt_loc = virt_loc;
