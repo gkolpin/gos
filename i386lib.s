@@ -49,6 +49,8 @@ global	TIMER_INT
 global	SYSCALL_INT
 global	GEN_INT
 global	ERR_INT
+global	DOUBLE_FAULT_INT
+global	STACK_FAULT_INT
 global	LIDTR	
 
 ;; void outb(uint16 port, uint8 data);
@@ -251,6 +253,14 @@ GEN_INT:
 	iretd
 	
 ERR_INT:
+	add	esp, 4		; remove error code
+	iretd
+
+DOUBLE_FAULT_INT:
+	add	esp, 4		; remove error code
+	iretd
+	
+STACK_FAULT_INT:
 	add	esp, 4		; remove error code
 	iretd
 	

@@ -2,6 +2,7 @@
 #include "gos.h"
 #include "types.h"
 #include "mm.h"
+#include "utility.h"
 #include "kprintf.h"
 
 /* number of page directory and table entries */
@@ -29,7 +30,7 @@
 /* user mem starts at 1MB */
 #define USER_HEAP_START KERNEL_THRESHOLD
 /* vm map starts at 3GB - slot 768 */
-#define VM_MAP_SLOT 768
+#define KERN_VM_DIR_ENTRY 768
 /* vm map size - 4MB for page tables plus 1KB for page dir */
 #define VM_MAP_SIZE ((1 << 22) + 0x1000)
 /* page directory virtual memory location */
@@ -115,6 +116,28 @@ void * kern_phys_to_virt(void *phys_addr){
 
 void * kern_virt_to_phys(void *virt_addr){
   return (void*)((uint32)virt_addr - kern_virt_mem_offset);
+}
+
+void * kmemmap2virt(void *phys_addr, uint32 no_pages){
+  return vm_alloc_at(phys_addr, (uint32)kern_phys_to_virt(phys_addr),
+		     no_pages * PAGE_SIZE, SUPERVISOR);
+}
+
+uint32 copy_cur_page_dir(){
+  int i;
+  PAGE_DIR copy = (PAGE_DIR)alloc_pages(1);
+  kmemcpy2phys(copy, (void*)PAGE_DIR_VM_LOC, PAGE_SIZE);
+  copy = kmemmap2virt(copy, 1);
+  copy[NUM_ENTRIES - 1] = create_entry((uint32)kern_virt_to_phys(copy) / PAGE_SIZE, PDE_UR);
+  /* start at 1 because first 4MB should stay the same for now */
+  for (i = 1; i < KERN_VM_DIR_ENTRY; i++){
+    copy[i] = (entry_t)0;
+  }
+  return (uint32)kern_virt_to_phys(copy);
+}
+
+void set_pd(uint32 pd_phys){
+  load_cr3(pd_phys);
 }
 
 PRIVATE void map_pages(uint32 virtual_page_no, uint32 physical_page_no, 

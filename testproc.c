@@ -5,9 +5,18 @@
 PRIVATE void _printf(const char* string);
 PRIVATE void _print_int(int n);
 PRIVATE void _cons_putchar(char c);
+PRIVATE int _fork();
+void proc2();
 
 void proc1(){
   int i = 0;
+  int proc_id;
+
+  proc_id = _fork();
+  
+  if (proc_id != 0)
+    proc2();
+
   while (1) {
     _printf("this is proc1: ");
     _print_int(i);

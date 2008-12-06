@@ -21,6 +21,17 @@ void * kmemcpy2phys(void *phys_dest, const void *virt_src, uint32 size){
   return phys_dest;
 }
 
+void kmemcpyphys(uint32 page_dest, uint32 page_src, uint32 no_pages){
+  void * virt_dest = vm_alloc_at((void*)(page_dest * PAGE_SIZE),
+				 (uint32)kern_phys_to_virt((void*)(page_dest * PAGE_SIZE)),
+				 no_pages * PAGE_SIZE, SUPERVISOR);
+  void * virt_src = vm_alloc_at((void*)(page_src * PAGE_SIZE),
+				(uint32)kern_phys_to_virt((void*)(page_src * PAGE_SIZE)),
+				no_pages * PAGE_SIZE, SUPERVISOR);
+
+  kmemcpy(virt_dest, virt_src, no_pages * PAGE_SIZE);
+}
+
 void bzero(void *buf, uint32 size){
   int i;
   for (i = 0; i < size; i++){

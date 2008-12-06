@@ -72,7 +72,9 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   kprintf("%x\n", (uint32)prog1buf);
 
   task * t1 = create_task_from_elf(prog1buf, prog_size * 4096);
+  kprintf("created task from elf\n");
   schedule(t1);
+  kprintf("scheduled\n");
 
   sched_int();
 
@@ -107,6 +109,16 @@ PRIVATE void test_kmalloc(){
   if (t3 == t2){
     kprintf("t3 is the same as t2\n");
   }
+
+  t1 = kmalloc(PAGE_SIZE);
+  kprintf("kmalloc1 complete\n");
+  t2 = kmalloc(PAGE_SIZE);
+  kprintf("kmalloc2 complete\n");
+
+  ((uint8*)t1)[0] = 'a';
+  ((uint8*)t2)[0] = 'a';
+
+  kprintf("t1,: %u, t2: %u\n", (uint32)t1, (uint32)t2);
 }
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uint32 tss_pos, void* tss){

@@ -29,8 +29,7 @@ typedef struct task{
   reg_t esp;
   reg_t ss;
 
-  void* stack; 			/* task's stack */
-  uint32 stack_len;		/* size of stack in pages */
+  uint32 stack_len;		/* size of stack in bytes */
   uint32 stack_phys_pages[MAX_STACK_PAGES];
   uint32 num_segments;		/* number of memory segments */
   uint32 segment_phys_addr[MAX_TASK_SEGMENTS]; /* space for segment pointers */
@@ -40,6 +39,8 @@ typedef struct task{
   uint32 executable_file_size;	/* executable file size in bytes */
 
   uint32 id;			/* task's id */
+  bool has_run;			/* records if the task has actually started */
+  uint32 pd_phys;		/* physical address of the task's page dir */
 
   struct task *prev;		/* for placing tasks in lists */
   struct task *next;
@@ -50,9 +51,10 @@ task * create_task(uint32 task_start_addr, uint32 executable_image_phys_addr,
 		   uint32 executable_image_size);
 void add_task_segment(task*, uint32 segment_phys_addr, uint32 segment_data_length,
 		      uint32 segment_virt_addr, uint32 segment_size);
-task * create_from_task(task*);
+task * clone_task(task*);
 void set_syscall_return(task*, uint32);
 uint32 get_id(task*);
 void set_id(task*, uint32);
+void prepare_task(task*);
 
 #endif

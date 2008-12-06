@@ -17,13 +17,17 @@ task * create_task(uint32 task_start_addr, uint32 executable_image_phys_addr,
   task *task_return = (task*)kmalloc(sizeof(task));
   task_return->stack_phys_pages[0] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
 
-  task_return->stack = vm_alloc_at((void*)(task_return->stack_phys_pages[0] * PAGE_SIZE),
-				   KERNEL_HEAP_START - PAGE_SIZE, PAGE_SIZE,
-				   USER);
+  vm_alloc_at((void*)(task_return->stack_phys_pages[0] * PAGE_SIZE),
+	      KERNEL_HEAP_START - PAGE_SIZE, PAGE_SIZE,
+	      USER);
   task_return->stack_len = DEFAULT_STACK_SIZE * PAGE_SIZE;
   task_return->num_segments = 0;
   task_return->executable_file_phys_addr = executable_image_phys_addr;
   task_return->executable_file_size = executable_image_size;
+
+  task_return->has_run = FALSE;
+  kprintf("copying current page dir\n");
+  task_return->pd_phys = copy_cur_page_dir();
 
   task_return->prev = NULL;
   task_return->next = NULL;
@@ -39,14 +43,12 @@ task * create_task(uint32 task_start_addr, uint32 executable_image_phys_addr,
   
   /* to be popped off by iret */
   task_return->ss = R3_DATA_S;
-  task_return->esp = (uint32)((uint32)task_return->stack + task_return->stack_len - 1);
+  task_return->esp = KERNEL_HEAP_START - 1;
   kprintf("stack loc: %x\n", (uint32)task_return->esp);
   kprintf("task loc: %x\n", (uint32)task_return);
   kprintf("task + stack size: %d\n", sizeof(task) + DEFAULT_STACK_SIZE);
   kprintf("task size: %d\n", sizeof(task));
   kprintf("stack size: %d\n", DEFAULT_STACK_SIZE);
-  kprintf("top stack - bottom stack: %d\n", task_return->esp - 
-	  (uint32)task_return->stack);
   task_return->eflags = get_eflags() | 0x200; /* eflags (ensure interrupts enabled) */
   task_return->cs = R3_CODE_S;	/* cs */
   task_return->eip = (uint32)task_start_addr;	/* eip */
@@ -68,14 +70,20 @@ void add_task_segment(task *t, uint32 segment_phys_addr, uint32 segment_data_len
   vm_alloc_at((void*)segment_phys_addr, segment_virt_addr, segment_data_length, USER);
 }
 
-task * create_from_task(task *t){
+task * clone_task(task *t){
+  int i;
   task *newTask;
   newTask = (task*)kmalloc(sizeof(task));
 
   kmemcpy(newTask, t, sizeof(task));
 
-  newTask->stack = kmalloc(t->stack_len * PAGE_SIZE);
-  kmemcpy(newTask->stack, t->stack, t->stack_len * PAGE_SIZE);
+  newTask->has_run = FALSE;
+  newTask->pd_phys = copy_cur_page_dir();
+  
+  for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
+    newTask->stack_phys_pages[i] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
+    kmemcpyphys(newTask->stack_phys_pages[i], t->stack_phys_pages[i], 1);
+  }
 
   return newTask;
 }
@@ -90,4 +98,23 @@ uint32 get_id(task *t){
 
 void set_id(task *t, uint32 id){
   t->id = id;
+}
+
+void prepare_task(task *t){
+  int stack_pages = t->stack_len / PAGE_SIZE;
+  int i;
+
+  set_pd(t->pd_phys);
+
+  if (!t->has_run){
+    t->has_run = TRUE;
+
+    for (i = 0; i < stack_pages; i++){
+      vm_alloc_at((void*)(t->stack_phys_pages[i] * PAGE_SIZE),
+		  KERNEL_HEAP_START - PAGE_SIZE * (i + 1),
+		  PAGE_SIZE, USER);
+    }
+  }
+
+  set_pd(t->pd_phys);
 }

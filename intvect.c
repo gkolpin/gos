@@ -11,6 +11,8 @@ extern TIMER_INT(void);
 extern SYSCALL_INT(void);
 extern GEN_INT(void);
 extern ERR_INT(void);
+extern DOUBLE_FAULT_INT(void);
+extern STACK_FAULT_INT(void);
 
 /* defined in i386lib.s */
 extern void cmd_lidt(void*);
@@ -54,7 +56,19 @@ void intvect_init(void){
       lIDT[i+1]	|= 0xEE00;	/* descriptor privilege level is 3 */
       //lIDT[i+1]	|= 0x8E00;
     }
-    else if (i == (8 * 2) || ((i >= 10 * 2) && (i < 15 * 2))){
+    else if (i == (8 * 2)){
+      lIDT[i]	|= ((CODE_SELECTOR) << 16);
+      lIDT[i]	|= ((uint32)DOUBLE_FAULT_INT & 0xFFFF);
+      lIDT[i+1]	|= ((uint32)DOUBLE_FAULT_INT & 0xFFFF0000);
+      lIDT[i+1]	|= 0x8E00;
+    }
+    else if (i == (12 * 2)){
+      lIDT[i]	|= ((CODE_SELECTOR) << 16);
+      lIDT[i]	|= ((uint32)STACK_FAULT_INT & 0xFFFF);
+      lIDT[i+1]	|= ((uint32)STACK_FAULT_INT & 0xFFFF0000);
+      lIDT[i+1]	|= 0x8E00;
+    }
+    else if (((i >= 10 * 2) && (i < 15 * 2))){
       /* it's an error */
       lIDT[i]	|= ((CODE_SELECTOR) << 16);
       lIDT[i]	|= ((uint32)ERR_INT & 0xFFFF);

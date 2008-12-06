@@ -47,6 +47,7 @@ void schedule(task *t){
 	curTask->next = t;
 	t->prev = curTask;
 	set_id(t, get_id(curTask) + 1);
+	break;
       }
     }
   }
@@ -61,6 +62,7 @@ void sched_int(){
     cur_task_p = cur_task_p->next;
   }
 
+  prepare_task(cur_task_p);
   restart_task(cur_task_p);
 }
 
