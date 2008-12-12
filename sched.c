@@ -53,6 +53,19 @@ void schedule(task *t){
   }
 }
 
+void unschedule(uint32 task_id){
+  task **curTask;
+  for (curTask = &tasks; *curTask != NULL; curTask = &(*curTask)->next){
+    if (get_id(*curTask) == task_id){
+      if ((*curTask)->next != NULL){
+	(*curTask)->next->prev = (*curTask)->prev;
+      }
+      *curTask = (*curTask)->next;
+      return;
+    }
+  }
+}
+
 void sched_int(){
   if (cur_task_p == NULL){
     cur_task_p = tasks;
@@ -68,4 +81,15 @@ void sched_int(){
 
 task * get_cur_task(){
   return cur_task_p;
+}
+
+task * get_task_for_id(uint32 task_id){
+  task *curTask;
+  for (curTask = tasks; curTask != NULL; curTask = curTask->next){
+    if (task_id == get_id(curTask)){
+      return curTask;
+    }
+  }
+
+  return NULL;
 }

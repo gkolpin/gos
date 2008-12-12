@@ -22,6 +22,7 @@ extern	sched_int
 extern	cur_task_p
 extern  pic_eoi
 extern	ksyscall
+extern	handle_page_fault
 extern	tss_p
 	
 ;; port I/O
@@ -50,7 +51,11 @@ global	SYSCALL_INT
 global	GEN_INT
 global	ERR_INT
 global	DOUBLE_FAULT_INT
+global	INVALID_TSS_INT
+global	SEGMENT_NP_FAULT_INT
 global	STACK_FAULT_INT
+global	GENERAL_PROT_FAULT_INT
+global	PAGE_FAULT_INT
 global	LIDTR	
 
 ;; void outb(uint16 port, uint8 data);
@@ -204,12 +209,6 @@ IDT:
 	TIMES 0x800 DB 0	; fill the 256 * 8 byte table with zeros
 
 KEYBOARD_INT:
-	cli
-	pushad
-	call	kb_int
-	call	pic_eoi		; controller eoi
-	popad
-	sti
 	iretd
 	
 TIMER_INT:
@@ -246,7 +245,6 @@ SYSCALL_INT:
 	call	ksyscall
 	add	esp, 16		; pop 4 syscall parameters off stack
 	
-	push	dword [cur_task_p]
 	call	restart_task
 	
 GEN_INT:
@@ -260,8 +258,25 @@ DOUBLE_FAULT_INT:
 	add	esp, 4		; remove error code
 	iretd
 	
+INVALID_TSS_INT:
+	add	esp, 4
+	iretd
+
+SEGMENT_NP_FAULT_INT:
+	add	esp, 4
+	iretd
+
 STACK_FAULT_INT:
 	add	esp, 4		; remove error code
+	iretd
+
+GENERAL_PROT_FAULT_INT:
+	add	esp, 4
+	iretd
+
+PAGE_FAULT_INT:
+;	call	handle_page_fault ; error code has been pushed on stack
+	add	esp, 4
 	iretd
 	
 ALIGN 8

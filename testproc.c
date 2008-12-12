@@ -37,6 +37,10 @@ PRIVATE int _fork(){
   _make_syscall(FORK, 0, 0, 0);
 }
 
+PRIVATE int _kill(uint32 pid){
+  _make_syscall(KILL, pid, 0, 0);
+}
+
 PRIVATE void _printf(const char* string){
   int i;
   

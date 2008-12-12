@@ -24,8 +24,6 @@ PRIVATE object_cache objectCaches[NUM_OBJ_CACHES];
 PRIVATE uint32 max_size_obj;
 PRIVATE alloc_record *alloc_records = NULL;
 
-/* number of pages to allocate for given number of bytes */
-#define PAGES_FOR_BYTES(bytes) ((bytes / PAGE_SIZE) + (bytes % PAGE_SIZE ? 1 : 0))
 /* number of slots in a slab (page) */
 #define PAGE_NO_SLOTS(obj_size) ((PAGE_SIZE / obj_size) - \
 				(PAGE_SIZE / obj_size / BITS_PER_BYTE / obj_size) + \
@@ -71,6 +69,7 @@ void * kmalloc(uint32 size){
     virt_loc = get_obj_from_cache(size);
   } else {
     /* need to call alloc_pages directly */
+    kprintf("allocating large object\n");
     phys_loc = alloc_pages(PAGES_FOR_BYTES(size));
     virt_loc = map_phys_to_kernel_mem(phys_loc, PAGES_FOR_BYTES(size));
     record_allocation(virt_loc, size);
@@ -110,7 +109,7 @@ PRIVATE bool kfree_large(void *obj){
   bool retVal = FALSE;
 
   for (curRecord = alloc_records; curRecord != NULL; curRecord = curRecord->next){
-    if (obj > curRecord->virt_loc && (uint32)obj < ((uint32)curRecord->virt_loc + curRecord->size)){
+    if (obj >= curRecord->virt_loc && (uint32)obj < ((uint32)curRecord->virt_loc + curRecord->size)){
       retVal = TRUE;
       free_pages(kern_virt_to_phys(obj), PAGES_FOR_BYTES(curRecord->size));
       break;
@@ -148,7 +147,7 @@ PRIVATE bool kfree_small(void *obj){
 
     for (curPage = curCache->headPage; curPage != NULL; curPage = curPage->next_slab){
       physPage = get_real_page(curPage);
-      if (obj > physPage && (uint32)obj < (uint32)physPage + PAGE_SIZE){
+      if (obj >= physPage && (uint32)obj < (uint32)physPage + PAGE_SIZE){
 	indexLoc = ((uint32)obj - (uint32)physPage - INDEX_SIZE(curCache->size)) / curCache->size;
 	kprintf("indexLoc: %d\n", indexLoc);
 	idx = physPage;
@@ -159,6 +158,11 @@ PRIVATE bool kfree_small(void *obj){
       }
     }
   }
+
+  if (!foundObj){
+    return foundObj;
+  }
+
  END_LOOP:
   /* loop through index to see if page can be freed */
   if (curCache != NULL && curPage != NULL){

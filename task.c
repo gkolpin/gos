@@ -11,9 +11,7 @@
 /* default stack size is one page */
 #define DEFAULT_STACK_SIZE 1
 
-task * create_task(uint32 task_start_addr, uint32 executable_image_phys_addr,
-		   uint32 executable_image_size){
-  
+task * create_task(uint32 task_start_addr){
   task *task_return = (task*)kmalloc(sizeof(task));
   task_return->stack_phys_pages[0] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
 
@@ -22,8 +20,6 @@ task * create_task(uint32 task_start_addr, uint32 executable_image_phys_addr,
 	      USER);
   task_return->stack_len = DEFAULT_STACK_SIZE * PAGE_SIZE;
   task_return->num_segments = 0;
-  task_return->executable_file_phys_addr = executable_image_phys_addr;
-  task_return->executable_file_size = executable_image_size;
 
   task_return->has_run = FALSE;
   kprintf("copying current page dir\n");
@@ -60,11 +56,26 @@ task * create_task(uint32 task_start_addr, uint32 executable_image_phys_addr,
   return task_return;
 }
 
+void task_free(task *t){
+  int i;
+  for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
+    free_pages((void*)t->stack_phys_pages[i], 1);
+  }
+  
+  for (i = 0; i < t->num_segments; i++){
+    free_pages((void*)t->segment_phys_addr[i], t->segment_pages[i]);
+  }
+
+  pd_free(t->pd_phys);
+
+  kfree(t);
+}
+
 void add_task_segment(task *t, uint32 segment_phys_addr, uint32 segment_data_length,
-		      uint32 segment_virt_addr, uint32 segment_size){
+		      uint32 segment_virt_addr, uint32 segment_pages){
   t->segment_phys_addr[t->num_segments] = segment_phys_addr;
   t->segment_virt_addr[t->num_segments] = segment_virt_addr;
-  t->segment_sizes[t->num_segments] = segment_size;
+  t->segment_pages[t->num_segments] = segment_pages;
   t->num_segments++;
 
   vm_alloc_at((void*)segment_phys_addr, segment_virt_addr, segment_data_length, USER);
@@ -79,7 +90,7 @@ task * clone_task(task *t){
 
   newTask->has_run = FALSE;
   newTask->pd_phys = copy_cur_page_dir();
-  
+
   for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
     newTask->stack_phys_pages[i] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
     kmemcpyphys(newTask->stack_phys_pages[i], t->stack_phys_pages[i], 1);

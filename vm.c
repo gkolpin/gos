@@ -136,6 +136,19 @@ uint32 copy_cur_page_dir(){
   return (uint32)kern_virt_to_phys(copy);
 }
 
+void pd_free(uint32 pd_phys_addr){
+  PAGE_DIR pd = kmemmap2virt((void*)pd_phys_addr, 1);
+  int i;
+
+  for (i = 1; i < KERN_VM_DIR_ENTRY; i++){
+    if (pd[i] != EMPTY_PAGE){
+      free_pages((void*)(entry_page_no(pd[i]) * PAGE_SIZE), 1);
+    }
+  }
+
+  free_pages((void*)pd_phys_addr, 1);
+}
+
 void set_pd(uint32 pd_phys){
   load_cr3(pd_phys);
 }
@@ -225,6 +238,12 @@ void * vm_alloc_at(void * phys_addr, uint32 requested_loc, uint32 size, user_typ
 	    privilege_flags);
 
   return (void*)requested_loc;
+}
+
+void handle_page_fault(uint32 error_code){
+  kprintf("P: %d, WR: %d, US: %d\n", error_code & 1, (error_code >> 1) & 1, 
+	  (error_code >> 2) & 1);
+  while (1);
 }
 
 void print_page_table(){

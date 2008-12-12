@@ -28,7 +28,7 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   byte_t *prog1buf;
 
   kern_init(extended_mem, gdt, gdt_size, tss_pos, tss);
-  
+
   /*kprint_int(extended_mem);
   kprintf("\n");
   kprint_int((uint32)gdt);
@@ -57,11 +57,10 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   kprintf("begin load program\n");
   //prog1buf = (byte_t*)malloc(get_file_size(0));
   /* vm map program to 0x100000 (1MB) */
-  uint32 prog_size = get_file_size(0) / 4096 + 1;
+  uint32 prog_size = PAGES_FOR_BYTES(get_file_size(0));
   kprintf("file size in bytes: %d\n", get_file_size(0));
   kprintf("num file pages: %d\n", prog_size);
   //prog1buf = (byte_t*)kmalloc(prog_size * 4096);
-  prog1buf = alloc_pages(prog_size);
   prog1buf = kmalloc(prog_size * PAGE_SIZE);
   kprintf("allocated pages for task\n");
 
@@ -71,7 +70,11 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   kprintf("program loaded...\n");
   kprintf("%x\n", (uint32)prog1buf);
 
-  task * t1 = create_task_from_elf(prog1buf, prog_size * 4096);
+  task * t1 = create_task_from_elf(prog1buf, prog_size * PAGE_SIZE);
+  kprintf("created task\n");
+  kfree(prog1buf);
+  kprintf("freed prog1buf\n");
+
   kprintf("created task from elf\n");
   schedule(t1);
   kprintf("scheduled\n");

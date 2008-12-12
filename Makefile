@@ -19,7 +19,7 @@ kern_img: i386.s kernel.o i386lib.o testproc_lib.o
 	ld -N -e START -Ttext 0x10000 -o kern_img.out i386.o kernel.o i386lib.o \
 		testproc_lib.o
 	objdump	-S kern_img.out > kern_img.asm
-	objcopy -S -O binary kern_img.out kern_img
+	objcopy -S --pad-to=0x1FE00 -O binary kern_img.out kern_img
 
 i386lib.o: i386lib.s 
 	nasm -f elf -o i386lib.o i386lib.s
@@ -30,11 +30,11 @@ testproc_lib.o: testproc_lib.s
 kernel.o: kern_start.c console.c kprintf.c i386lib.o keyboard.c 8259_pic.c\
 	 intvect.c ksignal.c mm.c prot.c sched.c syscall.c utility.c testproc.c \
 	testproc_lib.o task.c at_disk_driver.c simple_fs.c vm.c kmalloc.c \
-	elf_loader.c fork.c
+	elf_loader.c fork.c kill.c
 	gcc -o kernel.o -c -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 kern_start.c \
 		console.c kprintf.c keyboard.c 8259_pic.c intvect.c ksignal.c mm.c \
 		prot.c sched.c syscall.c utility.c testproc.c task.c at_disk_driver.c \
-		simple_fs.c vm.c kmalloc.c elf_loader.c fork.c
+		simple_fs.c vm.c kmalloc.c elf_loader.c fork.c kill.c
 
 testproc.o: testproc.c
 	gcc -o testproc.o -c testproc.c

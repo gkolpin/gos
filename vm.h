@@ -13,6 +13,8 @@ typedef enum user_type {
   USER
 } user_type;
 
+/* number of pages to allocate for given number of bytes */
+#define PAGES_FOR_BYTES(bytes) ((bytes / PAGE_SIZE) + (bytes % PAGE_SIZE ? 1 : 0))
 
 void vm_init(uint32 start_reserved_kernel_page, uint32 no_reserved_kernel_pages);
 
@@ -23,7 +25,10 @@ void * kern_virt_to_phys(void* virt_addr);
 void * kmemmap2virt(void *phys_addr, uint32 no_pages);
 /* returns the physical address of the new (copied) page directory */
 uint32 copy_cur_page_dir();
+void pd_free(uint32 pd_phys_addr);
 void set_pd(uint32 pd_phys);
+
+void handle_page_fault(uint32 error_code);
 /*void * vm_malloc(uint32 size, user_type);*/
 
 #endif
