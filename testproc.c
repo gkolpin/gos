@@ -6,6 +6,7 @@ PRIVATE void _printf(const char* string);
 PRIVATE void _print_int(int n);
 PRIVATE void _cons_putchar(char c);
 PRIVATE int _fork();
+PRIVATE int _kill();
 void proc2();
 
 void proc1(){
@@ -15,12 +16,15 @@ void proc1(){
   proc_id = _fork();
   
   if (proc_id != 0)
-    proc2();
+  proc2();
 
   while (1) {
     _printf("this is proc1: ");
     _print_int(i);
     _printf("\n");
+    if (i == 500){
+      _kill(proc_id);
+    }
     i++;
   }
 }

@@ -67,9 +67,15 @@ void unschedule(uint32 task_id){
 }
 
 PRIVATE void set_new_running_task(sched_item *item){
+  if (item == NULL){
+    cur_task_p = NULL;
+    cur_sched_item = NULL;
+    return;
+  }
+
   cur_task_p = item->task;
   cur_sched_item = item;
-  
+
   prepare_task(cur_task_p);
 }
 
