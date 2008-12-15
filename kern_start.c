@@ -17,6 +17,7 @@
 #include "vm.h"
 #include "kmalloc.h"
 #include "elf_loader.h"
+#include "clock.h"
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
 PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map*);
@@ -79,7 +80,8 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   schedule(t1);
   kprintf("scheduled\n");
 
-  sched_int();
+  //sched_int();
+  restart_task();
 
   //cmd_sti();
 
@@ -148,6 +150,8 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   kprintf("sched_initted\n");
   prot_init(gdt, gdt_size, tss_pos, tss);
   kprintf("prot_initted\n");
+  clock_init();
+  kprintf("clock initted\n");
   hd_driver_init();
 }
 

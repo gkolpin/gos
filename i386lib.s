@@ -18,7 +18,7 @@ BITS	32
 	
 extern	kb_int
 extern	timer_int
-extern	sched_int
+extern	clock_tick
 extern	cur_task_p
 extern  pic_eoi
 extern	ksyscall
@@ -200,7 +200,6 @@ restart_task:
 	pop	es
 	pop	ds
 	popad
-	sti
 	iretd
 	
 
@@ -212,7 +211,6 @@ KEYBOARD_INT:
 	iretd
 	
 TIMER_INT:
-	cli
 	pusha
 	push	ds
 	push	es
@@ -222,14 +220,14 @@ TIMER_INT:
 	mov	esp, GOS_BOTTOM_STACK
 	
 	call	pic_eoi		; controller eoi
-	call	sched_int	; call sched_int at each timer tick
-				; we'll never actually get here, 
-				; as the task will have been switched and started in the call to sched_int
+	call	clock_tick	; call clock_tick of clock driver
+				; at each timer tick
+	call	restart_task
+	
 hang: 
 	jmp	hang
 	
 SYSCALL_INT:
-	cli
 	pusha
 	push	ds
 	push	es

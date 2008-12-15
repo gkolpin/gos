@@ -1,5 +1,5 @@
-#ifndef KMALLOC_H
-#define KMALLOC_H
+#ifndef _KMALLOC_H
+#define _KMALLOC_H
 
 #include "types.h"
 

@@ -25,9 +25,6 @@ task * create_task(uint32 task_start_addr){
   kprintf("copying current page dir\n");
   task_return->pd_phys = copy_cur_page_dir();
 
-  task_return->prev = NULL;
-  task_return->next = NULL;
-
   /*kprintf("\n");
   kprint_int((uint32)*esp);
   kprintf("\n");*/
@@ -101,14 +98,6 @@ task * clone_task(task *t){
 
 void set_syscall_return(task *t, uint32 ret_val){
   t->eax = ret_val;
-}
-
-uint32 get_id(task *t){
-  return t->id;
-}
-
-void set_id(task *t, uint32 id){
-  t->id = id;
 }
 
 void prepare_task(task *t){

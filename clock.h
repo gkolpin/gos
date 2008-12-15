@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-void set_ticks(uint16);
-uint16 get_ticks();
+void clock_init();
+void clock_tick();
 
 #endif

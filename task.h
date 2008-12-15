@@ -36,12 +36,8 @@ typedef struct task{
   uint32 segment_virt_addr[MAX_TASK_SEGMENTS];
   uint32 segment_pages[MAX_TASK_SEGMENTS]; /* segment sizes in pages */
 
-  uint32 id;			/* task's id */
   bool has_run;			/* records if the task has actually started */
   uint32 pd_phys;		/* physical address of the task's page dir */
-
-  struct task *prev;		/* for placing tasks in lists */
-  struct task *next;
 
 } task;
 
@@ -51,8 +47,6 @@ void add_task_segment(task*, uint32 segment_phys_addr, uint32 segment_data_lengt
 		      uint32 segment_virt_addr, uint32 segment_pages);
 task * clone_task(task*);
 void set_syscall_return(task*, uint32);
-uint32 get_id(task*);
-void set_id(task*, uint32);
 void prepare_task(task*);
 
 #endif

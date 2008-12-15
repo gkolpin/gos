@@ -4,6 +4,7 @@
 void fork_cur_task(){
   task *curTask = get_cur_task();
   task *newTask;
+  int newTaskId;
 
   kprintf("forking..\n");
 
@@ -12,7 +13,7 @@ void fork_cur_task(){
   kprintf("created new task struct\n");
 
   /* schedule will assign an id to the task */
-  schedule(newTask);
+  newTaskId = schedule(newTask);
 
   kprintf("scheduled\n");
   kprintf("new task addr: %x\n", (uint32)newTask);
@@ -20,5 +21,5 @@ void fork_cur_task(){
   
   /* 'return' child proc number to parent and 0 in child */
   set_syscall_return(newTask, 0);
-  set_syscall_return(curTask, get_id(newTask));
+  set_syscall_return(curTask, newTaskId);
 }
