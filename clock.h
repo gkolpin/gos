@@ -5,5 +5,6 @@
 
 void clock_init();
 void clock_tick();
+uint32 get_seconds_since_boot();
 
 #endif

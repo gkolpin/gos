@@ -7,6 +7,7 @@ PRIVATE void _print_int(int n);
 PRIVATE void _cons_putchar(char c);
 PRIVATE int _fork();
 PRIVATE int _kill();
+PRIVATE uint32 _uptime();
 void proc2();
 
 void proc1(){
@@ -43,6 +44,10 @@ PRIVATE int _fork(){
 
 PRIVATE int _kill(uint32 pid){
   _make_syscall(KILL, pid, 0, 0);
+}
+
+PRIVATE uint32 _uptime(){
+  _make_syscall(UPTIME, 0, 0, 0);
 }
 
 PRIVATE void _printf(const char* string){

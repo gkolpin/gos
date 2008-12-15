@@ -12,5 +12,8 @@ void ksyscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4){
   case KILL:
     kill_task(p2);
     break;
+  case UPTIME:
+    get_uptime();
+    break;
   }
 }

@@ -3,6 +3,8 @@
 #include "types.h"
 #include "sched.h"
 
+/* clock 'ticks' 60 times a second */
+#define CLOCK_FREQ 60
 /* generates a 60 Hz pulse */
 #define CLOCK_COUNTER 19887
 /* port to set clock mode */
@@ -12,15 +14,21 @@
 /* set 16-bit square wave pulse */
 #define CLOCK_MODE 0x36
 
+PRIVATE uint32 ticks_since_boot;
+
 void clock_init(){
   outb(CLOCK_MODE_PORT, CLOCK_MODE);
   outb(TIMER_COUNTER_PORT, CLOCK_COUNTER & 0xFF);
   outb(TIMER_COUNTER_PORT, CLOCK_COUNTER >> 8);
+
+  ticks_since_boot = 0;
 }
 
 void clock_tick(){
   /* this gets called at each timer interrupt - 60 times a second */
   int cur_id;
+
+  ticks_since_boot++;
 
   cur_sched_item->ticks--;
 
@@ -29,4 +37,8 @@ void clock_tick(){
     sched_dequeue(cur_id = cur_sched_item->id);
     sched_enqueue(cur_id);
   }
+}
+
+uint32 get_seconds_since_boot(){
+  return ticks_since_boot / CLOCK_FREQ;
 }
