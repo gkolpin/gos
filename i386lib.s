@@ -39,6 +39,7 @@ global  load_cr3
 global	enable_paging
 ;; proc
 global	restart_task
+global	idle_task_start
 global	GOS_BOTTOM_STACK
 ;; misc
 global	get_eflags
@@ -201,6 +202,12 @@ restart_task:
 	pop	ds
 	popad
 	iretd
+	
+idle_task_start:
+	sti
+	hlt
+	cli
+	jmp	idle_task_start
 	
 
 ALIGN 8				; align IDT to 8 byte boundary

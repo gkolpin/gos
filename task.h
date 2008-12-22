@@ -39,9 +39,16 @@ typedef struct task{
   bool has_run;			/* records if the task has actually started */
   uint32 pd_phys;		/* physical address of the task's page dir */
 
+  uint32 id;			/* task id */
+  uint16 ticks;			/* ticks remaining */
+
+  struct task *parent;
+  bool wait_for_child;
+
 } task;
 
 task * create_task(uint32 task_start_addr);
+task * create_kernel_task(uint32 task_start_addr);
 void task_free(task*);
 void add_task_segment(task*, uint32 segment_phys_addr, uint32 segment_data_length,
 		      uint32 segment_virt_addr, uint32 segment_pages);

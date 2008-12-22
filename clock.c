@@ -30,11 +30,11 @@ void clock_tick(){
 
   ticks_since_boot++;
 
-  cur_sched_item->ticks--;
+  cur_task_p->ticks--;
 
-  if (cur_sched_item->ticks <= 0){
+  if (cur_task_p->ticks <= 0){
     /* schedule a new task */
-    sched_dequeue(cur_id = cur_sched_item->id);
+    sched_dequeue(cur_id = cur_task_p->id);
     sched_enqueue(cur_id);
   }
 }

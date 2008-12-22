@@ -13,14 +13,26 @@
 /* task quantum is 5 ticks */
 #define TICKS_QUANTUM 5
 
+typedef struct sched_item {
+  task *task;
+  struct sched_item *next;
+} sched_item;
+
 /* proc table */
 PRIVATE sched_item * proc_table[MAX_PROC];
 /* process queue */
 PRIVATE sched_item *run_queue_head;
 /* tail of process queue */
 PRIVATE sched_item *run_queue_tail;
+/* sched_item of idle task - run when nothing else is available */
+PRIVATE sched_item *idle_task;
 /* number of scheduled procs */
 PRIVATE int no_procs;
+
+extern void idle_task_start();
+PRIVATE task * create_idle_task();
+PRIVATE sched_item * create_sched_item(uint32 id, uint16 ticks, 
+				       task *t, sched_item *next);
 
 void sched_init(){
   int i;
@@ -31,14 +43,22 @@ void sched_init(){
   run_queue_head = NULL;
   run_queue_tail = NULL;
   no_procs = 0;
+
+  idle_task = create_sched_item(MAX_PROC + 1, ~0, create_idle_task(), NULL);
+  cur_task_p = idle_task->task;
+}
+
+PRIVATE task * create_idle_task(){
+  task *retTask = create_kernel_task((uint32)idle_task_start);
+  return retTask;
 }
 
 PRIVATE sched_item * create_sched_item(uint32 id, uint16 ticks, 
 				       task *t, sched_item *next){
   sched_item *schedRet = (sched_item*)kmalloc(sizeof(sched_item));
-  schedRet->id = id;
-  schedRet->ticks = ticks;
   schedRet->task = t;
+  schedRet->task->id = id;
+  schedRet->task->ticks = ticks;
   schedRet->next = next;
   return schedRet;
 }
@@ -55,9 +75,9 @@ int schedule(task *t){
   for (i = 0, ppCurItem = proc_table; *ppCurItem; ppCurItem++, i++);
   *ppCurItem = create_sched_item(i, TICKS_QUANTUM, t, NULL);
 
-  sched_enqueue((*ppCurItem)->id);
+  sched_enqueue((*ppCurItem)->task->id);
 
-  return (*ppCurItem)->id;
+  return (*ppCurItem)->task->id;
 }
 
 void unschedule(uint32 task_id){
@@ -68,13 +88,13 @@ void unschedule(uint32 task_id){
 
 PRIVATE void set_new_running_task(sched_item *item){
   if (item == NULL){
-    cur_task_p = NULL;
-    cur_sched_item = NULL;
+    cur_task_p = idle_task->task;
+    /*cur_task_p = NULL;
+      cur_sched_item = NULL;*/
     return;
   }
 
   cur_task_p = item->task;
-  cur_sched_item = item;
 
   prepare_task(cur_task_p);
 }
@@ -87,9 +107,9 @@ void sched_enqueue(uint32 task_id){
   (*ppCurItem)->next = NULL;
   run_queue_tail = proc_table[task_id];
 
-  (*ppCurItem)->ticks = TICKS_QUANTUM;
+  (*ppCurItem)->task->ticks = TICKS_QUANTUM;
 
-  if (cur_task_p == NULL){
+  if (cur_task_p == idle_task->task){
     set_new_running_task(proc_table[task_id]);
   }
 }
@@ -121,4 +141,21 @@ task * get_task_for_id(uint32 task_id){
   if (task_id >= MAX_PROC)
     return NULL;
   return proc_table[task_id]->task;
+}
+
+uint32 * get_children_for_task(uint32 task_id, int *n_tasks){
+  uint32 *retVal = kmalloc(sizeof(uint32) * MAX_PROC);
+  int i;
+  int ret_i = 0;
+
+  for (i = 0; i < MAX_PROC; i++){
+    if (proc_table[i] != NULL &&
+	proc_table[i]->task->parent == proc_table[task_id]->task){
+      retVal[ret_i++] = i;
+    }
+  }
+
+  *n_tasks = ret_i;
+
+  return retVal;
 }

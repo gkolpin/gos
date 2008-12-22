@@ -25,6 +25,9 @@ task * create_task(uint32 task_start_addr){
   kprintf("copying current page dir\n");
   task_return->pd_phys = copy_cur_page_dir();
 
+  task_return->parent = NULL;
+  task_return->wait_for_child = FALSE;
+
   /*kprintf("\n");
   kprint_int((uint32)*esp);
   kprintf("\n");*/
@@ -44,6 +47,44 @@ task * create_task(uint32 task_start_addr){
   kprintf("stack size: %d\n", DEFAULT_STACK_SIZE);
   task_return->eflags = get_eflags() | 0x200; /* eflags (ensure interrupts enabled) */
   task_return->cs = R3_CODE_S;	/* cs */
+  task_return->eip = (uint32)task_start_addr;	/* eip */
+
+  kprintf("eip: %x\n", task_start_addr);
+
+  /*kprint_int((uint32)task_return->stack_p);*/
+
+  return task_return;
+}
+
+task * create_kernel_task(uint32 task_start_addr){
+  task *task_return = (task*)kmalloc(sizeof(task));
+
+  task_return->stack_len = 0;
+  task_return->num_segments = 0;
+
+  task_return->has_run = FALSE;
+  kprintf("copying current page dir\n");
+  task_return->pd_phys = copy_cur_page_dir();
+
+  /*kprintf("\n");
+  kprint_int((uint32)*esp);
+  kprintf("\n");*/
+
+  task_return->gs = R0_DATA_S;
+  task_return->fs = R0_DATA_S;
+  task_return->es = R0_DATA_S;
+  task_return->ds = R0_DATA_S;
+  
+  /* to be popped off by iret */
+  task_return->ss = R0_DATA_S;
+  //task_return->esp = KERNEL_HEAP_START - 1;
+  /*kprintf("stack loc: %x\n", (uint32)task_return->esp);
+  kprintf("task loc: %x\n", (uint32)task_return);
+  kprintf("task + stack size: %d\n", sizeof(task) + DEFAULT_STACK_SIZE);
+  kprintf("task size: %d\n", sizeof(task));
+  kprintf("stack size: %d\n", DEFAULT_STACK_SIZE);*/
+  task_return->eflags = get_eflags() | 0x200; /* eflags (ensure interrupts enabled) */
+  task_return->cs = R0_CODE_S;	/* cs */
   task_return->eip = (uint32)task_start_addr;	/* eip */
 
   kprintf("eip: %x\n", task_start_addr);
@@ -87,6 +128,7 @@ task * clone_task(task *t){
 
   newTask->has_run = FALSE;
   newTask->pd_phys = copy_cur_page_dir();
+  newTask->parent = t;
 
   for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
     newTask->stack_phys_pages[i] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;

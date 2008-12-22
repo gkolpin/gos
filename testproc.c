@@ -8,6 +8,7 @@ PRIVATE void _cons_putchar(char c);
 PRIVATE int _fork();
 PRIVATE int _kill();
 PRIVATE uint32 _uptime();
+PRIVATE void _exit(int status);
 void proc2();
 
 void proc1(){
@@ -16,8 +17,8 @@ void proc1(){
 
   proc_id = _fork();
   
-  if (proc_id != 0)
-  proc2();
+  if (proc_id == 0)
+    proc2();
 
   while (1) {
     _printf("this is proc1: ");
@@ -26,6 +27,8 @@ void proc1(){
     if (i == 500){
       _kill(proc_id);
     }
+    if (i == 600)
+      _exit(0);
     i++;
   }
 }
@@ -48,6 +51,10 @@ PRIVATE int _kill(uint32 pid){
 
 PRIVATE uint32 _uptime(){
   _make_syscall(UPTIME, 0, 0, 0);
+}
+
+PRIVATE void _exit(int status){
+  _make_syscall(EXIT, status, 0, 0);
 }
 
 PRIVATE void _printf(const char* string){

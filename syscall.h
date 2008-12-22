@@ -6,11 +6,13 @@
 void fork_cur_task();
 void kill_task(uint32 task_id);
 void get_uptime();
+void exit_cur_task(int status);
 
 /* system calls */
 enum {
   CONS_PUTCHAR,
   FORK,
+  EXIT,
   KILL,
   UPTIME
 };
