@@ -9,26 +9,25 @@ PRIVATE int _fork();
 PRIVATE int _kill();
 PRIVATE uint32 _uptime();
 PRIVATE void _exit(int status);
+PRIVATE void _waitpid(uint32 pid, uint32 *status, uint32 opts);
 void proc2();
 
 void proc1(){
   int i = 0;
   int proc_id;
+  uint32 status;
 
   proc_id = _fork();
   
   if (proc_id == 0)
     proc2();
 
+  _waitpid(proc_id, &status, 0);
+
   while (1) {
     _printf("this is proc1: ");
     _print_int(i);
     _printf("\n");
-    if (i == 500){
-      _kill(proc_id);
-    }
-    if (i == 600)
-      _exit(0);
     i++;
   }
 }
@@ -55,6 +54,10 @@ PRIVATE uint32 _uptime(){
 
 PRIVATE void _exit(int status){
   _make_syscall(EXIT, status, 0, 0);
+}
+ 
+PRIVATE void _waitpid(uint32 pid, uint32 *status, uint32 opts){
+  _make_syscall(WAITPID, pid, (uint32)status, opts);
 }
 
 PRIVATE void _printf(const char* string){
@@ -84,6 +87,10 @@ void proc2(){
     _printf("this is proc2: ");
     _print_int(i);
     _printf("\n");
+
+    if (i == 500)
+      _exit(0);
+
     i++;
   }
 }

@@ -44,7 +44,9 @@ typedef struct task{
 
   struct task *parent;
   bool wait_for_child;
-
+  uint32 wait_child_id;
+  uint32 wait_statloc;
+  
 } task;
 
 task * create_task(uint32 task_start_addr);
@@ -55,5 +57,7 @@ void add_task_segment(task*, uint32 segment_phys_addr, uint32 segment_data_lengt
 task * clone_task(task*);
 void set_syscall_return(task*, uint32);
 void prepare_task(task*);
+void set_wait_for_child(task*, uint32 child_task_id, uint32 statloc);
+bool within_task_mem_map(task*, uint32 virt_addr);
 
 #endif

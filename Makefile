@@ -30,12 +30,12 @@ testproc_lib.o: testproc_lib.s
 kernel.o: kern_start.c console.c kprintf.c i386lib.o keyboard.c 8259_pic.c\
 	 intvect.c ksignal.c mm.c prot.c sched.c syscall.c utility.c testproc.c \
 	testproc_lib.o task.c at_disk_driver.c simple_fs.c vm.c kmalloc.c \
-	elf_loader.c fork.c kill.c clock.c uptime.c exit.c
+	elf_loader.c fork.c kill.c clock.c uptime.c exit.c waitpid.c
 	gcc -o kernel.o -c -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 kern_start.c \
 		console.c kprintf.c keyboard.c 8259_pic.c intvect.c ksignal.c mm.c \
 		prot.c sched.c syscall.c utility.c testproc.c task.c at_disk_driver.c \
 		simple_fs.c vm.c kmalloc.c elf_loader.c fork.c kill.c clock.c \
-		uptime.c exit.c
+		uptime.c exit.c waitpid.c
 
 testproc.o: testproc.c syscall.h
 	gcc -o testproc.o -c testproc.c

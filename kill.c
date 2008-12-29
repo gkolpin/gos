@@ -2,7 +2,7 @@
 #include "gos.h"
 #include "types.h"
 #include "sched.h"
-
+#include "task.h"
 
 PRIVATE kill_child_tasks(uint32 task_id){
   int no_children;
@@ -14,12 +14,25 @@ PRIVATE kill_child_tasks(uint32 task_id){
   kfree(children);
 }
 
+PRIVATE void do_waitpid(task *tWaiting, uint32 child_task){
+  tWaiting->wait_for_child = FALSE;
+  set_syscall_return(tWaiting, child_task);
+  sched_enqueue(tWaiting->id);
+}
+
 void kill_task(uint32 task_id){
   task *tToKill;
 
   kill_child_tasks(task_id);
 
   tToKill = get_task_for_id(task_id);
+
+  if (tToKill && tToKill->parent && tToKill->parent->wait_for_child){
+    if (tToKill->parent->wait_child_id == -1 ||
+	tToKill->parent->wait_child_id == task_id){
+      do_waitpid(tToKill->parent, task_id);
+    }
+  }
 
   if (tToKill != NULL){
     unschedule(task_id);

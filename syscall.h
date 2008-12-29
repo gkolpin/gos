@@ -7,12 +7,14 @@ void fork_cur_task();
 void kill_task(uint32 task_id);
 void get_uptime();
 void exit_cur_task(int status);
+void waitpid(uint32 pid, uint32 statloc, uint32 opts);
 
 /* system calls */
 enum {
   CONS_PUTCHAR,
   FORK,
   EXIT,
+  WAITPID,
   KILL,
   UPTIME
 };

@@ -160,3 +160,28 @@ void prepare_task(task *t){
 
   set_pd(t->pd_phys);
 }
+
+void set_wait_for_child(task *t, uint32 child_task_id, uint32 statloc){
+  t->wait_for_child = TRUE;
+  t->wait_statloc = statloc;
+  t->wait_child_id = child_task_id;
+}
+
+bool within_task_mem_map(task *t, uint32 virt_addr){
+  int i;
+  /* first look in data segments */
+  for (i = 0; i < t->num_segments; i++){
+    if (virt_addr >= t->segment_virt_addr[i] &&
+	virt_addr < (t->segment_virt_addr[i] + PAGE_SIZE * t->segment_pages[i])){
+      return TRUE;
+    }
+  }
+
+  /* now look in stack */
+  if (virt_addr < KERNEL_HEAP_START &&
+      virt_addr >= (KERNEL_HEAP_START - t->stack_len)){
+    return TRUE;
+  }
+
+  return FALSE;
+}
