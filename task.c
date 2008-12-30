@@ -158,6 +158,12 @@ void prepare_task(task *t){
     }
   }
 
+  /* set status if wait pid has been set */
+  if (t->wait_for_child)
+    *((int*)t->wait_statloc) = t->child_exit_status;
+  t->wait_for_child = FALSE;
+
+
   set_pd(t->pd_phys);
 }
 

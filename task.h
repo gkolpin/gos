@@ -42,10 +42,12 @@ typedef struct task{
   uint32 id;			/* task id */
   uint16 ticks;			/* ticks remaining */
 
+  int exit_status;
   struct task *parent;
   bool wait_for_child;
   uint32 wait_child_id;
   uint32 wait_statloc;
+  int child_exit_status;
   
 } task;
 

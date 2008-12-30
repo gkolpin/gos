@@ -12,5 +12,6 @@ void exit_cur_task(int status){
     
   }*/
 
+  curTask->exit_status = status;
   kill_task(curTask->id);
 }
