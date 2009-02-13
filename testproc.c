@@ -24,6 +24,9 @@ void proc1(){
 
   _waitpid(proc_id, &status, 0);
 
+  _print_int(status);
+  while (1);
+
   while (1) {
     _printf("this is proc1: ");
     _print_int(i);
@@ -89,7 +92,7 @@ void proc2(){
     _printf("\n");
 
     if (i == 500)
-      _exit(0);
+      _exit(44);
 
     i++;
   }

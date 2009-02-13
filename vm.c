@@ -52,6 +52,10 @@ PRIVATE uint32 kern_virt_mem_offset = 0;
 
 PRIVATE bool paging_enabled = FALSE;
 
+#define VIRT2PDE(virt_mem) ((uint32)virt_mem >> PAGE_DIR_BIT_SHIFT)
+#define VIRT2PTE(virt_mem) (((uint32)virt_mem & PAGE_TABLE_ENTRY_MASK) \
+ 				>> PAGE_TABLE_BIT_SHIFT)
+
 /* defined in i386lib.s */
 void load_cr3(uint32);
 void enable_paging();
@@ -121,6 +125,15 @@ void * kern_virt_to_phys(void *virt_addr){
 void * kmemmap2virt(void *phys_addr, uint32 no_pages){
   return vm_alloc_at(phys_addr, (uint32)kern_phys_to_virt(phys_addr),
 		     no_pages * PAGE_SIZE, SUPERVISOR);
+}
+
+void * virt2phys(uint32 pd_phys_addr, void *virt_src){
+  PAGE_DIR pd = (PAGE_DIR)kmemmap2virt((void*)pd_phys_addr, 1);
+  entry_t pt_entry = pd[VIRT2PDE(virt_src)];
+  PAGE_DIR pt = (PAGE_DIR)kmemmap2virt((void*)(entry_page_no(pt_entry) * PAGE_SIZE), 1);
+  uint32 phys_page = entry_page_no(pt[VIRT2PTE(virt_src)]);
+  uint32 phys_loc = phys_page * PAGE_SIZE + (uint32)virt_src % PAGE_SIZE;
+  return (void*)(phys_loc);
 }
 
 uint32 copy_cur_page_dir(){

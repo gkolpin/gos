@@ -17,6 +17,9 @@ PRIVATE kill_child_tasks(uint32 task_id){
 PRIVATE void do_waitpid(task *tWaiting, task *child_task){
   set_syscall_return(tWaiting, child_task->id);
   tWaiting->child_exit_status = child_task->exit_status;
+  task_set_mem(tWaiting, (void*)tWaiting->wait_statloc, 
+	       (void*)&child_task->exit_status, sizeof(int));
+  tWaiting->wait_for_child = FALSE;
   sched_enqueue(tWaiting->id);
 }
 

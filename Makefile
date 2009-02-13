@@ -24,7 +24,7 @@ bootloader: bootloader.s patch_boot kern_img count_blocks
 
 kern_img: i386.s ${OBJ_FILES} i386lib.o testproc_lib.o
 	nasm -f elf -o i386.o i386.s
-	ld -N -e START -Ttext 0x10000 -o kern_img.out i386.o ${OBJ_FILES} i386lib.o \
+	ld -melf_i386_fbsd -N -e START -Ttext 0x10000 -o kern_img.out i386.o ${OBJ_FILES} i386lib.o \
 		testproc_lib.o
 	objdump	-S kern_img.out > kern_img.asm
 	objcopy -S --pad-to=0x1FE00 -O binary kern_img.out kern_img
@@ -36,13 +36,13 @@ testproc_lib.o: testproc_lib.s
 	nasm -f elf -o testproc_lib.o testproc_lib.s
 
 ${OBJ_FILES}: ${SRC_FILES}
-	gcc -c -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 ${SRC_FILES}
+	gcc -c -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 -m32 -march=i386 ${SRC_FILES}
 
 testproc.o: testproc.c syscall.h
-	gcc -o testproc.o -c testproc.c
+	gcc -o testproc.o -c -m32 -march=i386 testproc.c
 
 testproc: testproc.o testproc_lib.o
-	ld -N -e proc1 -Ttext 0x200000 -o testproc testproc.o testproc_lib.o
+	ld -melf_i386_fbsd -N -e proc1 -Ttext 0x200000 -o testproc testproc.o testproc_lib.o
 
 fs_index: fs_format testproc
 	./fs_format fs_index `./count_blocks testproc 512`

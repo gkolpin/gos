@@ -158,12 +158,6 @@ void prepare_task(task *t){
     }
   }
 
-  /* set status if wait pid has been set */
-  if (t->wait_for_child)
-    *((int*)t->wait_statloc) = t->child_exit_status;
-  t->wait_for_child = FALSE;
-
-
   set_pd(t->pd_phys);
 }
 
@@ -190,4 +184,9 @@ bool within_task_mem_map(task *t, uint32 virt_addr){
   }
 
   return FALSE;
+}
+
+void task_set_mem(task *t, void *dest, void *src, uint32 len){
+  void *phys_addr = virt2phys(t->pd_phys, dest);
+  kmemcpy2phys(phys_addr, src, len);
 }

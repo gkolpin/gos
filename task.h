@@ -61,5 +61,6 @@ void set_syscall_return(task*, uint32);
 void prepare_task(task*);
 void set_wait_for_child(task*, uint32 child_task_id, uint32 statloc);
 bool within_task_mem_map(task*, uint32 virt_addr);
+void task_set_mem(task*, void* dest, void* src, uint32 len);
 
 #endif
