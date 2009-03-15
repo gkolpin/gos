@@ -63,6 +63,11 @@ PRIVATE void _waitpid(uint32 pid, uint32 *status, uint32 opts){
   _make_syscall(WAITPID, pid, (uint32)status, opts);
 }
 
+PRIVATE void _wait(uint32 *status){
+  /* -1: wait for any child process */
+  _waitpid(-1, status, 0);
+}
+
 PRIVATE void _printf(const char* string){
   int i;
   
