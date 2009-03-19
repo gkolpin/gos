@@ -4,7 +4,7 @@
 #include "types.h"
 
 /* Using 4kb pages. */
-#define PAGE_SIZE 4096
+#define PAGE_SIZE 4096u
 /* kernel heap starts at 3GB */
 #define KERNEL_HEAP_START 0xC0000000
 
@@ -15,6 +15,10 @@ typedef enum user_type {
 
 /* number of pages to allocate for given number of bytes */
 #define PAGES_FOR_BYTES(bytes) ((bytes / PAGE_SIZE) + (bytes % PAGE_SIZE ? 1 : 0))
+/* page alignment */
+#define PAGE_ALIGN_DOWN(addr) (addr & ~(PAGE_SIZE - 1))
+#define PAGE_ALIGN_UP(addr) (PAGE_ALIGN_DOWN(addr) + (addr & (PAGE_SIZE - 1))\
+			     * PAGE_SIZE)
 
 void vm_init(uint32 start_reserved_kernel_page, uint32 no_reserved_kernel_pages);
 

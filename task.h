@@ -36,6 +36,9 @@ typedef struct task{
   uint32 segment_virt_addr[MAX_TASK_SEGMENTS];
   uint32 segment_pages[MAX_TASK_SEGMENTS]; /* segment sizes in pages */
 
+  uint32 data_seg_start_vaddr;	/* data segment start virtual address - page aligned */
+  uint32 data_seg_end_vaddr;	/* data segment end virtual address - not page aligned*/
+
   bool has_run;			/* records if the task has actually started */
   uint32 pd_phys;		/* physical address of the task's page dir */
 
@@ -62,5 +65,7 @@ void prepare_task(task*);
 void set_wait_for_child(task*, uint32 child_task_id, uint32 statloc);
 bool within_task_mem_map(task*, uint32 virt_addr);
 void task_set_mem(task*, void* dest, void* src, uint32 len);
+uint32 get_data_heap_end(task*);
+bool move_data_heap_end(task*, int amnt);
 
 #endif

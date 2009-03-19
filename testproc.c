@@ -68,6 +68,10 @@ PRIVATE void _wait(uint32 *status){
   _waitpid(-1, status, 0);
 }
 
+PRIVATE int _brk(const void *addr){
+  _make_syscall(BRK, addr, 0, 0);
+}
+
 PRIVATE void _printf(const char* string){
   int i;
   

@@ -21,6 +21,9 @@ task * create_task(uint32 task_start_addr){
   task_return->stack_len = DEFAULT_STACK_SIZE * PAGE_SIZE;
   task_return->num_segments = 0;
 
+  task_return->data_seg_start_vaddr = 0;
+  task_return->data_seg_end_vaddr = 0;
+
   task_return->has_run = FALSE;
   kprintf("copying current page dir\n");
   task_return->pd_phys = copy_cur_page_dir();
@@ -61,6 +64,9 @@ task * create_kernel_task(uint32 task_start_addr){
 
   task_return->stack_len = 0;
   task_return->num_segments = 0;
+
+  task_return->data_seg_start_vaddr = 0;
+  task_return->data_seg_end_vaddr = 0;
 
   task_return->has_run = FALSE;
   kprintf("copying current page dir\n");
@@ -111,10 +117,18 @@ void task_free(task *t){
 
 void add_task_segment(task *t, uint32 segment_phys_addr, uint32 segment_data_length,
 		      uint32 segment_virt_addr, uint32 segment_pages){
+  uint32 seg_end;
+
   t->segment_phys_addr[t->num_segments] = segment_phys_addr;
   t->segment_virt_addr[t->num_segments] = segment_virt_addr;
   t->segment_pages[t->num_segments] = segment_pages;
   t->num_segments++;
+
+  /* increase data segment end */
+  if ((seg_end = segment_virt_addr + segment_pages * PAGE_SIZE) > t->data_seg_start_vaddr){
+    t->data_seg_start_vaddr = PAGE_ALIGN_UP(seg_end);
+    t->data_seg_end_vaddr = t->data_seg_start_vaddr;
+  }
 
   vm_alloc_at((void*)segment_phys_addr, segment_virt_addr, segment_data_length, USER);
 }
@@ -189,4 +203,34 @@ bool within_task_mem_map(task *t, uint32 virt_addr){
 void task_set_mem(task *t, void *dest, void *src, uint32 len){
   void *phys_addr = virt2phys(t->pd_phys, dest);
   kmemcpy2phys(phys_addr, src, len);
+}
+
+uint32 get_data_heap_end(task *t){
+  return t->data_seg_end_vaddr;
+}
+
+bool move_data_heap_end(task *t, int amnt){
+  uint32 old_data_end = t->data_seg_end_vaddr;
+  uint32 new_data_end = old_data_end + amnt;
+  uint32 numBytes;
+  void *new_mem;
+
+  if (new_data_end < t->data_seg_start_vaddr ||
+      new_data_end > KERNEL_HEAP_START - t->stack_len){
+    return FALSE;
+  }
+  
+  t->data_seg_end_vaddr = new_data_end;
+  /* for now we'll just handle the case where we're growing the data segment */
+  if (new_data_end > old_data_end &&
+      (numBytes = PAGE_ALIGN_DOWN(old_data_end) - PAGE_ALIGN_DOWN(new_data_end)) > 0){
+    /* need to allocate more pages */
+    new_mem = alloc_pages(PAGES_FOR_BYTES(numBytes));
+    t->segment_phys_addr[t->num_segments] = (uint32)new_mem;
+    t->segment_pages[t->num_segments] = PAGES_FOR_BYTES(numBytes);
+    t->num_segments++;
+    vm_alloc_at(new_mem, PAGE_ALIGN_UP(old_data_end), numBytes, USER);
+  }
+
+  return TRUE;
 }
