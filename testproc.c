@@ -30,8 +30,7 @@ void proc1(){
 
   _print_int(status);
   _printf("\n");
-  _print_int((uint32)_sbrk(0));
-  heap = _sbrk(0);
+  heap = _sbrk(1);
   heap[0] = 5;
   _printf("\n");
   _print_int((uint32)heap);

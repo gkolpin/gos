@@ -215,6 +215,8 @@ bool move_data_heap_end(task *t, int amnt){
   uint32 numBytes;
   void *new_mem;
 
+  kprintf("old_data_end: %d, new_data-end: %d\n", old_data_end, new_data_end);
+
   if (new_data_end < t->data_seg_start_vaddr ||
       new_data_end > KERNEL_HEAP_START - t->stack_len){
     return FALSE;
@@ -223,7 +225,7 @@ bool move_data_heap_end(task *t, int amnt){
   t->data_seg_end_vaddr = new_data_end;
   /* for now we'll just handle the case where we're growing the data segment */
   if (new_data_end > old_data_end &&
-      (numBytes = PAGE_ALIGN_DOWN(old_data_end) - PAGE_ALIGN_DOWN(new_data_end)) > 0){
+      (numBytes = PAGE_ALIGN_UP(new_data_end) - PAGE_ALIGN_UP(old_data_end)) > 0){
     kprintf("allocating new pages!\n");
     /* need to allocate more pages */
     new_mem = alloc_pages(PAGES_FOR_BYTES(numBytes));
