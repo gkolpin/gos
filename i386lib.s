@@ -213,11 +213,8 @@ idle_task_start:
 ALIGN 8				; align IDT to 8 byte boundary
 IDT:
 	TIMES 0x800 DB 0	; fill the 256 * 8 byte table with zeros
-
-KEYBOARD_INT:
-	iretd
 	
-TIMER_INT:
+%macro	KERN_ENTER 0
 	pusha
 	push	ds
 	push	es
@@ -225,7 +222,13 @@ TIMER_INT:
 	push	gs
 	
 	mov	esp, GOS_BOTTOM_STACK
+%endmacro
+
+KEYBOARD_INT:
+	iretd
 	
+TIMER_INT:
+	KERN_ENTER
 	call	pic_eoi		; controller eoi
 	call	clock_tick	; call clock_tick of clock driver
 				; at each timer tick
@@ -235,14 +238,7 @@ hang:
 	jmp	hang
 	
 SYSCALL_INT:
-	pusha
-	push	ds
-	push	es
-	push	fs
-	push	gs
-	
-	mov	esp, GOS_BOTTOM_STACK
-	
+	KERN_ENTER
 	push	edx		; syscall parameters were passed in regiters
 	push	ecx
 	push	ebx
@@ -280,9 +276,12 @@ GENERAL_PROT_FAULT_INT:
 	iretd
 
 PAGE_FAULT_INT:
-;	call	handle_page_fault ; error code has been pushed on stack
+	pop	dword [ERR_NUM]
+	KERN_ENTER
+	push	dword [ERR_NUM]
+	call	handle_page_fault ; error code has been pushed on stack
 	add	esp, 4
-	iretd
+	call	restart_task
 	
 ALIGN 8
 	DW	0		; align LIDT pseudo-descriptor to odd word
@@ -292,4 +291,7 @@ LIDTR:
 
 GOS_TOP_STACK:
 	TIMES	0x1000 DB 0
-GOS_BOTTOM_STACK:	
+GOS_BOTTOM_STACK:
+
+[section .data]
+ERR_NUM:	DD 0

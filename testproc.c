@@ -10,12 +10,16 @@ PRIVATE int _kill();
 PRIVATE uint32 _uptime();
 PRIVATE void _exit(int status);
 PRIVATE void _waitpid(uint32 pid, uint32 *status, uint32 opts);
+PRIVATE void _wait(uint32 *status);
+PRIVATE int _brk(const void *addr);
+PRIVATE void * _sbrk(int incr);
 void proc2();
 
 void proc1(){
   int i = 0;
   int proc_id;
   uint32 status;
+  char *heap;
 
   proc_id = _fork();
   
@@ -25,7 +29,12 @@ void proc1(){
   _waitpid(proc_id, &status, 0);
 
   _print_int(status);
-  while (1);
+  _printf("\n");
+  _print_int((uint32)_sbrk(0));
+  heap = _sbrk(0);
+  heap[0] = 5;
+  _printf("\n");
+  _print_int((uint32)heap);
 
   while (1) {
     _printf("this is proc1: ");
@@ -36,7 +45,7 @@ void proc1(){
 }
 
 PRIVATE uint32 _make_syscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4){
-  MAKE_SYSCALL(p1, p2, p3, p4);
+  return MAKE_SYSCALL(p1, p2, p3, p4);
 }
 
 PRIVATE void _cons_putchar(char c){
@@ -44,15 +53,15 @@ PRIVATE void _cons_putchar(char c){
 }
 
 PRIVATE int _fork(){
-  _make_syscall(FORK, 0, 0, 0);
+  return _make_syscall(FORK, 0, 0, 0);
 }
 
 PRIVATE int _kill(uint32 pid){
-  _make_syscall(KILL, pid, 0, 0);
+  return _make_syscall(KILL, pid, 0, 0);
 }
 
 PRIVATE uint32 _uptime(){
-  _make_syscall(UPTIME, 0, 0, 0);
+  return _make_syscall(UPTIME, 0, 0, 0);
 }
 
 PRIVATE void _exit(int status){
@@ -69,7 +78,11 @@ PRIVATE void _wait(uint32 *status){
 }
 
 PRIVATE int _brk(const void *addr){
-  _make_syscall(BRK, addr, 0, 0);
+  return _make_syscall(BRK, (uint32)addr, 0, 0);
+}
+
+PRIVATE void * _sbrk(int incr){
+  return (void*)_make_syscall(SBRK, incr, 0, 0);
 }
 
 PRIVATE void _printf(const char* string){

@@ -33,7 +33,6 @@ uint32 copy_cur_page_dir();
 void pd_free(uint32 pd_phys_addr);
 void set_pd(uint32 pd_phys);
 
-void handle_page_fault(uint32 error_code);
 /*void * vm_malloc(uint32 size, user_type);*/
 
 #endif

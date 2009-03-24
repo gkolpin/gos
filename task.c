@@ -224,6 +224,7 @@ bool move_data_heap_end(task *t, int amnt){
   /* for now we'll just handle the case where we're growing the data segment */
   if (new_data_end > old_data_end &&
       (numBytes = PAGE_ALIGN_DOWN(old_data_end) - PAGE_ALIGN_DOWN(new_data_end)) > 0){
+    kprintf("allocating new pages!\n");
     /* need to allocate more pages */
     new_mem = alloc_pages(PAGES_FOR_BYTES(numBytes));
     t->segment_phys_addr[t->num_segments] = (uint32)new_mem;

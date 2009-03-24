@@ -253,12 +253,6 @@ void * vm_alloc_at(void * phys_addr, uint32 requested_loc, uint32 size, user_typ
   return (void*)requested_loc;
 }
 
-void handle_page_fault(uint32 error_code){
-  kprintf("P: %d, WR: %d, US: %d\n", error_code & 1, (error_code >> 1) & 1, 
-	  (error_code >> 2) & 1);
-  while (1);
-}
-
 void print_page_table(){
   int pdIndex, ptIndex;
   uint32 ptPageLoc;
