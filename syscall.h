@@ -20,7 +20,8 @@ enum {
   KILL,
   UPTIME,
   BRK,
-  SBRK
+  SBRK,
+  GETPID
 };
 
 void ksyscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4);

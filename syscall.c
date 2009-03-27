@@ -27,5 +27,8 @@ void ksyscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4){
   case SBRK:
     sbrk(p2);
     break;
+  case GETPID:
+    getpid();
+    break;
   }
 }

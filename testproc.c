@@ -13,6 +13,7 @@ PRIVATE void _waitpid(uint32 pid, uint32 *status, uint32 opts);
 PRIVATE void _wait(uint32 *status);
 PRIVATE int _brk(const void *addr);
 PRIVATE void * _sbrk(int incr);
+PRIVATE int getpid();
 void proc2();
 
 void proc1(){
@@ -36,7 +37,8 @@ void proc1(){
   _print_int((uint32)heap);
 
   while (1) {
-    _printf("this is proc1: ");
+    _printf("this is proc ");
+    _print_int(getpid());
     _print_int(i);
     _printf("\n");
     i++;
@@ -84,6 +86,10 @@ PRIVATE void * _sbrk(int incr){
   return (void*)_make_syscall(SBRK, incr, 0, 0);
 }
 
+PRIVATE int getpid(){
+  return _make_syscall(GETPID, 0, 0, 0);
+}
+
 PRIVATE void _printf(const char* string){
   int i;
   
@@ -108,7 +114,8 @@ PRIVATE void _print_int(int n){
 void proc2(){
   int i = 0;
   while (1) {
-    _printf("this is proc2: ");
+    _printf("this is proc ");
+    _print_int(getpid());
     _print_int(i);
     _printf("\n");
 
