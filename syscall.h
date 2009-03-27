@@ -11,18 +11,7 @@ void waitpid(uint32 pid, uint32 statloc, uint32 opts);
 void brk(void *addr);
 void sbrk(int incr);
 
-/* system calls */
-enum {
-  CONS_PUTCHAR,
-  FORK,
-  EXIT,
-  WAITPID,
-  KILL,
-  UPTIME,
-  BRK,
-  SBRK,
-  GETPID
-};
+#include "syscalls.h"
 
 void ksyscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4);
 
