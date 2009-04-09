@@ -9,5 +9,8 @@ void kmemcpyphys(uint32 page_dest, uint32 page_src, uint32 no_pages);
 void bzero(void*, uint32);
 uint32 get_eflags();
 uint32 bit_scan_forward(uint32);
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+size_t strlen(const char*);
 
 #endif

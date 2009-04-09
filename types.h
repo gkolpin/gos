@@ -17,7 +17,10 @@ typedef uint8		byte_t;
 
 typedef int		int32_t;
 
-typedef uint32 		addr32;
+typedef unsigned long	uintptr_t;
+typedef unsigned long	size_t;
+
+#define SIZE_T_MAX (~((size_t)0))
 
 typedef union qword_t {
   word_t words[4];

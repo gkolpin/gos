@@ -1,0 +1,52 @@
+#include "list.h"
+#include "gos.h"
+#include "types.h"
+#include "kmalloc.h"
+
+struct _list {
+  list_node head;
+  size_t node_offset;
+};
+
+list _list_init(size_t node_offset){
+  list retList = (list)kmalloc(sizeof(struct _list));
+  retList->head.prev = retList->head.next = &retList->head;
+  retList->node_offset = node_offset;
+  return retList;
+}
+
+bool destroy_list(list l){
+  if (list_empty(l)){
+    kfree(l);
+    return TRUE;
+  }
+  return FALSE;
+}
+
+void list_add(list l, list_node *node){
+  node->prev = l->head.prev;
+  node->next = &(l->head);
+
+  node->prev->next = node;
+  l->head.prev = node;
+}
+
+list_node * list_next(list l, list_node *node){
+  if (&l->head == node->next){
+    return NULL;
+  }
+
+  return node->next;
+}
+
+list_node * list_head(list l){
+  return l->head.next;
+}
+
+size_t list_node_offset(list l){
+  return l->node_offset;
+}
+
+bool list_empty(list l){
+  return l->head.next == &l->head;
+}

@@ -3,7 +3,7 @@
 
 #include "types.h"
 
-typedef addr32 	Elf32_Addr;
+typedef uint32 	Elf32_Addr;
 typedef uint16 	Elf32_Half;
 typedef uint32 	Elf32_Off;
 typedef int32_t	Elf32_Sword;

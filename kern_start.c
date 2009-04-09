@@ -18,6 +18,8 @@
 #include "kmalloc.h"
 #include "elf_loader.h"
 #include "clock.h"
+#include "devices.h"
+#include "vfs.h"
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
 PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map*);
@@ -132,10 +134,8 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   mem_map map[128];
 
   pic_init();
-  cons_init();
-  kprintf("cons_initted\n");
-  kbd_init();
-  kprintf("kbd_initted\n");
+  init_devices();
+  kprintf("devices initted\n");
   intvect_init();
   kprintf("intvect_initted\n");
   retrieve_mem_map(extended_mem, map);
@@ -153,6 +153,9 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   clock_init();
   kprintf("clock initted\n");
   hd_driver_init();
+  kprintf("hd_driver initted\n");
+  vfs_init();
+  kprintf("vfs initted\n");
 }
 
 PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map *map){
