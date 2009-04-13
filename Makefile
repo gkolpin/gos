@@ -2,7 +2,7 @@ SRC_FILES=kern_start.c console.c kprintf.c keyboard.c 8259_pic.c\
 	intvect.c ksignal.c mm.c prot.c sched.c syscall.c utility.c \
 	task.c at_disk_driver.c simple_fs.c vm.c kmalloc.c \
 	elf_loader.c fork.c kill.c clock.c uptime.c exit.c waitpid.c \
-	brk.c pf.c getpid.c devices.c vfs.c devfs.c list.c
+	brk.c pf.c getpid.c devices.c vfs.c devfs.c list.c tty.c
 
 HEADER_FILES=*.h
 
@@ -10,7 +10,7 @@ OBJ_FILES=kern_start.o console.o kprintf.o keyboard.o 8259_pic.o\
 	 intvect.o ksignal.o mm.o prot.o sched.o syscall.o utility.o \
 	 task.o at_disk_driver.o simple_fs.o vm.o kmalloc.o \
 	elf_loader.o fork.o kill.o clock.o uptime.o exit.o waitpid.o \
-	brk.o pf.o getpid.o devices.o vfs.o devfs.o list.o
+	brk.o pf.o getpid.o devices.o vfs.o devfs.o list.o tty.o
 
 patch_boot: patch_boot.c
 	gcc -o patch_boot patch_boot.c

@@ -156,6 +156,8 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   kprintf("hd_driver initted\n");
   vfs_init();
   kprintf("vfs initted\n");
+  devfs_init();
+  kprintf("devfs initted\n");
 }
 
 PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map *map){

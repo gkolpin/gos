@@ -9,6 +9,6 @@ typedef struct driver {
   int (*read)(void *buf, uint32 num_bytes);
   int (*write)(void *buf, uint32 num_bytes);
   int (*close)();
-} device;
+} driver;
 
 #endif
