@@ -6,7 +6,7 @@
 
 struct _vfd {
   struct _fs_node *fsnod;
-  int fs_fd;
+  void *fs_data;
 };
 
 struct _fs_node {
@@ -43,21 +43,21 @@ int vfs_init(){
 vfd vfs_open(const char *path){
   struct _fs_node *fsnod = get_fs_node_for_path(path);
   vfd vfd_return = (vfd)kmalloc(sizeof(struct _vfd));
-  vfd_return->fs_fd = fsnod->fs->open(path + strlen(fsnod->mount_pt));
+  vfd_return->fs_data = fsnod->fs->open(path + strlen(fsnod->mount_pt));
   vfd_return->fsnod = fsnod;
   return vfd_return;
 }
 
 int vfs_read(vfd fd, void *buf, uint32 num_bytes) {
-  return fd->fsnod->fs->read(fd->fs_fd, buf, num_bytes);
+  return fd->fsnod->fs->read(fd->fs_data, buf, num_bytes);
 }
 
 int vfs_write(vfd fd, void *buf, uint32 num_bytes){
-  return fd->fsnod->fs->write(fd->fs_fd, buf, num_bytes);
+  return fd->fsnod->fs->write(fd->fs_data, buf, num_bytes);
 }
 
 int vfs_close(vfd fd){
-  return fd->fsnod->fs->close(fd->fs_fd);
+  return fd->fsnod->fs->close(fd->fs_data);
 }
 
 int vfs_mount(const char *type, const char *dir){

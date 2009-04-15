@@ -50,3 +50,13 @@ size_t list_node_offset(list l){
 bool list_empty(list l){
   return l->head.next == &l->head;
 }
+
+void list_insert_before(list_node *to_insert, list_node *node_in_list){
+  if (NULL == node_in_list)
+    return;
+
+  to_insert->next = node_in_list;
+  to_insert->prev = node_in_list->prev;
+  node_in_list->prev = to_insert;
+  node_in_list->prev = to_insert;
+}

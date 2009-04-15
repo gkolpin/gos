@@ -19,5 +19,6 @@ list_node * list_next(list l, list_node*);
 list_node * list_head(list l);
 size_t list_node_offset(list l);
 bool list_empty(list);
+void list_insert_before(list_node *to_insert, list_node *node_in_list);
 
 #endif
