@@ -11,7 +11,6 @@
 #include "prot.h"
 #include "sched.h"
 #include "mm.h"
-#include "testproc.h"
 #include "at_disk_driver.h"
 #include "simple_fs.h"
 #include "vm.h"
