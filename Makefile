@@ -8,6 +8,7 @@ LDF_GLOBAL	:= -melf_i386_fbsd -N
 CC		:= gcc
 COMP		= ${CC} ${CF_GLOBAL} ${CF_DIR} -c -o $@ $<
 DEPEND		:= ./depend.sh
+DEP_BUILD	= ${DEPEND} ${dir $*} ${CF_GLOBAL} $*.c > $@
 AR		= ar -c -r $@ $^
 ASM		= nasm ${ASMF_GLOBAL} -o $@ $<
 LD		= ld

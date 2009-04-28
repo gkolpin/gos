@@ -18,6 +18,9 @@ OBJ_FILES=kern_start.o console.o kprintf.o keyboard.o 8259_pic.o\
 %.o	: %.s
 	${ASM}
 
+%.d	: %.c
+	${DEP_BUILD}
+
 TOOLS_D		:= tools
 KERN_IMG	:= kern/kern_img
 

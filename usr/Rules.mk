@@ -17,10 +17,8 @@ ${DEP_${d}}: 	DEP_DIR := ${d}
 ${d}/testproc:	${OBJ_${d}}
 	${LD} ${LDF_GLOBAL} -e proc1 -Ttext 0x200000 -o $@ $^
 
-include ${DEP_${d}}
 
-${DEP_${d}}: 	${SRC_${d}}
-	${DEPEND} ${DEP_DIR} ${CF_GLOBAL} $< > $@
+include ${DEP_${d}}
 
 # restore d
 d		:= ${dirstack_${sp}}

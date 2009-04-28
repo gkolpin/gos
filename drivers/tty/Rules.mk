@@ -15,10 +15,8 @@ ${DEP_${d}}: 	DEP_DIR := ${d}
 ${d}/tty.a:	${OBJ_${d}}
 	${AR}
 
-include ${DEP_${d}}
 
-${DEP_${d}}: 	${SRC_${d}}
-	${DEPEND} ${DEP_DIR} ${CF_GLOBAL} $< > $@
+include ${DEP_${d}}
 
 # restore d
 d		:= ${dirstack_${sp}}

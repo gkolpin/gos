@@ -20,10 +20,8 @@ ${d}/kern_img.asm: ${d}/kern_img.out
 ${d}/kern_img: ${d}/kern_img.out ${d}/kern_img.asm
 	objcopy -S --pad-to=0x1FE00 -O binary $< $@
 
-include ${DEP_${d}}
 
-${DEP_${d}}: 	${SRC_${d}}
-	${DEPEND} ${DEP_DIR} ${CF_GLOBAL} $< > $@
+include ${DEP_${d}}
 
 # restore d
 d		:= ${dirstack_${sp}}
