@@ -5,7 +5,7 @@ d 		:= ${dir}
 
 SRC_${d} 	:= ${wildcard ${d}/*.c}
 ASM_SRC_${d}	:= ${wildcard ${d}/*.s}
-OBJ_${d}	:= ${SRC_${d}:.c=.o} ${ASM_SRC_${d}:.s=.o}
+OBJ_${d}	:= ${d}/testproc.o ${SRC_${d}:.c=.o} ${ASM_SRC_${d}:.s=.o}
 DEP_${d}	:= ${SRC_${d}:.c=.d}
 
 
