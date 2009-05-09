@@ -40,6 +40,7 @@ list_node * list_next(list l, list_node *node){
 }
 
 list_node * list_head(list l){
+  if (list_empty(l)) return NULL;
   return l->head.next;
 }
 

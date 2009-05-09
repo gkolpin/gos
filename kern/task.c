@@ -7,9 +7,18 @@
 #include "vm.h"
 #include "mm.h"
 #include "utility.h"
+#include "list.h"
 
 /* default stack size is one page */
 #define DEFAULT_STACK_SIZE 1
+
+struct _fd {
+  int fd;
+  vfd vfd;
+  list_node l_node;
+};
+
+PRIVATE void close_all_descriptors(task*);
 
 task * create_task(uint32 task_start_addr){
   task *task_return = (task*)kmalloc(sizeof(task));
@@ -30,6 +39,8 @@ task * create_task(uint32 task_start_addr){
 
   task_return->parent = NULL;
   task_return->wait_for_child = FALSE;
+
+  task_return->descriptors = list_init(struct _fd, l_node);
 
   /*kprintf("\n");
   kprint_int((uint32)*esp);
@@ -111,6 +122,9 @@ void task_free(task *t){
   }
 
   pd_free(t->pd_phys);
+
+  close_all_descriptors(t);
+  destroy_list(t->descriptors);
 
   kfree(t);
 }
@@ -236,4 +250,37 @@ bool move_data_heap_end(task *t, int amnt){
   }
 
   return TRUE;
+}
+
+int task_add_vfd(task *t, vfd vfd){
+  struct _fd *fd = (struct _fd*)kmalloc(sizeof(struct _fd));
+  fd->vfd = vfd;
+  list_node *cur_node;
+  struct _fd *curfd;
+  int i;
+  for (cur_node = list_head(t->descriptors), i = 1; cur_node != NULL; cur_node = list_next(t->descriptors, cur_node), i++){
+    curfd = cur_obj(t->descriptors, cur_node, struct _fd);
+    if (curfd->fd > i){
+      fd->fd = i;
+      list_insert_before(cur_node, &(fd->l_node));
+      return i;
+    }
+  }
+  
+  fd->fd = i;
+  list_add(t->descriptors, &(fd->l_node));
+  return i;
+}
+
+PRIVATE void close_all_descriptors(task *t){
+  list_node *n;
+  struct _fd *fd;
+  list_node *tmp;
+  for (n = list_head(t->descriptors); n != NULL; ){
+    fd = cur_obj(t->descriptors, n, struct _fd);
+    vfs_close(fd->vfd);
+    tmp = list_next(t->descriptors, n);
+    kfree(fd);
+    n = tmp;
+  } 
 }

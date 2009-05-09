@@ -1,8 +1,8 @@
 #include "gos.h"
 #include "kprintf.h"
-#include "console.h"
 #include "types.h"
 #include "stdarg.h"
+#include "tty.h"
 
 PRIVATE void kprint_int(uint32 n, int base);
 PRIVATE char get_char_for_base(uint32, int base);
@@ -29,25 +29,25 @@ void kprintf(const char* fmt, ...){
 	kprint_int(va_arg(ap, int), 16);
 	break;
       default:
-	cons_putchar(fmt[i]);
+	kputchar(fmt[i]);
 	break;
       }
     }
     else {
-      cons_putchar(fmt[i]);
+      kputchar(fmt[i]);
     }
   }
 }
 
 PRIVATE void kprint_int(uint32 n, int base){
   if (n <= (base - 1)){
-    cons_putchar(get_char_for_base(n, base));
+    kputchar(get_char_for_base(n, base));
     return;
   }
 
   kprint_int(n / base, base);
 
-  cons_putchar(get_char_for_base(n % base, base));
+  kputchar(get_char_for_base(n % base, base));
 }
 
 PRIVATE char get_char_for_base(uint32 n, int base){

@@ -1,5 +1,6 @@
 #include "syslib.h"
 #include "syscalls.h"
+#include "types.h"
 
 #define PRIVATE static
 
@@ -48,4 +49,16 @@ void * sbrk(int incr){
 
 int getpid(){
   return make_syscall(GETPID, 0, 0, 0);
+}
+
+int open(char *path){
+  return make_syscall(OPEN, (uintptr_t)path, 0, 0);
+}
+
+int read(int d, void *buf, size_t nbytes){
+  return make_syscall(READ, d, (uintptr_t)buf, nbytes);
+}
+
+int write(int d, void *buf, size_t nbytes){
+  return make_syscall(WRITE, d, (uintptr_t)buf, nbytes);
 }

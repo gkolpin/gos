@@ -3,6 +3,8 @@
 
 #include "driver.h"
 
-driver * tty_get_driver();
+driver * tty_init();
+void kb_int(void);
+void kputchar(char c);
 
 #endif

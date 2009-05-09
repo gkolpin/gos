@@ -225,7 +225,10 @@ IDT:
 %endmacro
 
 KEYBOARD_INT:
-	iretd
+	KERN_ENTER
+	call 	pic_eoi
+	call	kb_int		;call kb interrupt handler in tty.c
+	call 	restart_task
 	
 TIMER_INT:
 	KERN_ENTER

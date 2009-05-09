@@ -31,6 +31,9 @@ PRIVATE alloc_record *alloc_records = NULL;
 /* gets the object pointer for the specified index on the slab (page) */
 #define SLOT_DATA(page_data, idx_size, index, obj_size) ((void*)&((byte_t*)((uint32)page_data + \
 								idx_size * sizeof(uint32)))[index * obj_size])
+/* gets the index location of the specified object pointer */
+#define INDEX_LOC(page_data, idx_size, object, obj_size) (((uint32)(object) - (uint32)(page_data) - \
+							   (idx_size * sizeof(uint32))) / (obj_size))
 /* returns the size of the index in number of 32 bit entities */
 #define INDEX_SIZE(obj_size) ((PAGE_SIZE / obj_size / BITS_PER_UINT32) + \
 				((PAGE_SIZE / obj_size) % BITS_PER_UINT32 ? \
@@ -44,7 +47,7 @@ PRIVATE void init_page(PAGE*, PAGE *next_page, PAGE *prev_page);
 PRIVATE void * alloc_free_obj(object_cache*);
 PRIVATE void * alloc_free_obj_in_page(PAGE *page, uint32 size);
 PRIVATE void * get_real_page(PAGE *page);
-PRIVATE init_page_index(PAGE *page, uint32 obj_size);
+PRIVATE void init_page_index(PAGE *page, uint32 obj_size);
 PRIVATE bool kfree_large(void*);
 PRIVATE bool kfree_small(void*);
 
@@ -148,7 +151,7 @@ PRIVATE bool kfree_small(void *obj){
     for (curPage = curCache->headPage; curPage != NULL; curPage = curPage->next_slab){
       physPage = get_real_page(curPage);
       if (obj >= physPage && (uint32)obj < (uint32)physPage + PAGE_SIZE){
-	indexLoc = ((uint32)obj - (uint32)physPage - INDEX_SIZE(curCache->size)) / curCache->size;
+	indexLoc = INDEX_LOC(physPage, INDEX_SIZE(curCache->size), obj, curCache->size);
 	kprintf("indexLoc: %d\n", indexLoc);
 	idx = physPage;
 	idx[indexLoc / BITS_PER_UINT32] ^= 
@@ -254,7 +257,7 @@ PRIVATE void * get_real_page(PAGE *page){
   return kern_phys_to_virt((void*)phys_addr);
 }
 
-PRIVATE init_page_index(PAGE *page, uint32 obj_size){
+PRIVATE void init_page_index(PAGE *page, uint32 obj_size){
   int i;
   void *page_data = get_real_page(page);
   for (i = 0; i < INDEX_SIZE(obj_size); i++){

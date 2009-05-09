@@ -133,8 +133,8 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   mem_map map[128];
 
   pic_init();
-  init_devices();
-  kprintf("devices initted\n");
+  cons_init();
+  kprintf("cons_initted\n");
   intvect_init();
   kprintf("intvect_initted\n");
   retrieve_mem_map(extended_mem, map);
@@ -157,6 +157,10 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   kprintf("vfs initted\n");
   devfs_init();
   kprintf("devfs initted\n");
+  init_devices();
+  kprintf("devices initted\n");
+  vfs_mount("devfs", "/dev");
+  kprintf("devfs mounted\n");
 }
 
 PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map *map){
@@ -170,8 +174,4 @@ PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map *map){
   map[1].page_loc = 0x100000 / PAGE_SIZE;
   map[1].pages = extended_mem * 0x400 /* 1024 */ / PAGE_SIZE;
   map[1].reserved = FALSE;
-}
-
-void kb_int(void){
-  cons_putchar(getchar());
 }

@@ -4,7 +4,7 @@
 #include "driver.h"
 #include "filesystem.h"
 
-filesystem * devfs_init();
+void devfs_init();
 
 enum FILE_DESCRIPTORS {
   KEYBOARD,

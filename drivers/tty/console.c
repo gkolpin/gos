@@ -72,3 +72,16 @@ void cons_putchar(char c){
   outb(0x3D4, 0xF); // cursor location low register
   outb(0x3D5, cur_loc_index);
 }
+
+void set_display(void *buf, int nbytes){
+  char *cbuf = (char*)buf;
+  int i;
+  if (nbytes > CONS_SIZE){
+    cbuf = cbuf + nbytes - CONS_SIZE;
+    nbytes = CONS_SIZE;
+  }
+  
+  for (i = 0; i < nbytes; i++){
+    cons_putchar(cbuf[i]);
+  }
+}

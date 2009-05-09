@@ -5,5 +5,6 @@
 
 void cons_init(void);
 void cons_putchar(char c);
+void set_display(void*, int nbytes);
 
 #endif

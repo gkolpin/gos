@@ -11,7 +11,10 @@ enum {
   UPTIME,
   BRK,
   SBRK,
-  GETPID
+  GETPID,
+  OPEN,
+  READ,
+  WRITE
 };
 
 #endif

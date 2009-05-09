@@ -10,6 +10,9 @@ void exit_cur_task(int status);
 void waitpid(uint32 pid, uint32 statloc, uint32 opts);
 void brk(void *addr);
 void sbrk(int incr);
+void sys_open(char *path);
+void sys_read(int d, void *buf, size_t nbytes);
+void sys_write(int d, void *buf, size_t nbytes);
 
 #include "syscalls.h"
 

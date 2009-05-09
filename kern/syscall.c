@@ -30,5 +30,14 @@ void ksyscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4){
   case GETPID:
     getpid();
     break;
+  case OPEN:
+    sys_open((char*)p2);
+    break;
+  case READ:
+    sys_read(p2, (void*)p3, p4);
+    break;
+  case WRITE:
+    sys_write(p2, (void*)p3, p4);
+    break;
   }
 }

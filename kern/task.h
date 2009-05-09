@@ -2,6 +2,8 @@
 #define _TASK_H
 
 #include "types.h"
+#include "vfs.h"
+#include "list.h"
 
 #define MAX_TASK_SEGMENTS 10
 #define MAX_STACK_PAGES 10
@@ -51,7 +53,10 @@ typedef struct task{
   uint32 wait_child_id;
   uint32 wait_statloc;
   int child_exit_status;
-  
+
+  list descriptors;
+  int sid;
+  int pgid;
 } task;
 
 task * create_task(uint32 task_start_addr);
@@ -67,5 +72,6 @@ bool within_task_mem_map(task*, uint32 virt_addr);
 void task_set_mem(task*, void* dest, void* src, uint32 len);
 uint32 get_data_heap_end(task*);
 bool move_data_heap_end(task*, int amnt);
+int task_add_vfd(task*, vfd);
 
 #endif

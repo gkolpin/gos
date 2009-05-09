@@ -4,9 +4,9 @@
 #include "types.h"
 
 typedef struct driver {
-  int (*init)();
-  int (*read)(void *buf, uint32 num_bytes);
-  int (*write)(void *buf, uint32 num_bytes);
+  int (*init)(void *dev_data);
+  int (*read)(void *buf, uint32 num_bytes, void *dev_data);
+  int (*write)(void *buf, uint32 num_bytes, void *dev_data);
 } driver;
 
 #endif

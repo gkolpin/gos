@@ -43,7 +43,7 @@ int vfs_init(){
 vfd vfs_open(const char *path){
   struct _fs_node *fsnod = get_fs_node_for_path(path);
   vfd vfd_return = (vfd)kmalloc(sizeof(struct _vfd));
-  vfd_return->fs_data = fsnod->fs->open(path + strlen(fsnod->mount_pt));
+  vfd_return->fs_data = fsnod->fs->open(path + strlen(fsnod->mount_pt) + 1);
   vfd_return->fsnod = fsnod;
   return vfd_return;
 }
@@ -62,11 +62,16 @@ int vfs_close(vfd fd){
 
 int vfs_mount(const char *type, const char *dir){
   filesystem *fs = find_fs_for_type(type);
+  struct _fs_node *mountfs = (struct _fs_node*)kmalloc(sizeof(struct _fs_node));
+  mountfs->fs = fs;
+  mountfs->mount_pt = dir;
+  list_add(filesystems, &(mountfs->l_node));
+  return 0;
 }
 
 void register_fs(const char *type, filesystem *fs){
   struct _registered_fs_node *regFs = (struct _registered_fs_node*)kmalloc(sizeof(struct _registered_fs_node));
-  regFs->fs;
+  regFs->fs = fs;
   regFs->type = type;
   list_add(registered_filesystems, &(regFs->l_node));
 }

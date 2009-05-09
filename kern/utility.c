@@ -48,6 +48,7 @@ int strncmp(const char *s1, const char *s2, size_t len){
     if (*s1 > *s2) return 1;
     if (*s1 < *s2) return -1;
   }
+  if (!len) return 0;
   if (!*s1 && *s2) return 1;
   if (!*s2 && *s1) return -1;
   return 0;  

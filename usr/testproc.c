@@ -20,6 +20,12 @@ void proc1(){
 
   waitpid(proc_id, &status, 0);
 
+  int fd = open("/dev/ttyv0");
+  _printf("\n");
+  _printf("fd: ");
+  _print_int(fd);
+  while (1);
+
   _print_int(status);
   _printf("\n");
   heap = sbrk(1);

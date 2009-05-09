@@ -2,8 +2,8 @@
 #include "gos.h"
 
 void init_devices(){
-  cons_init();
-  kprintf("cons_initted\n");
+  tty_init();
+  kprintf("tty_initted\n");
   kbd_init();
   kprintf("kbd_initted\n");
 }
