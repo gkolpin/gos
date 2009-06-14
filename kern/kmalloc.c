@@ -78,6 +78,7 @@ void * kmalloc(uint32 size){
     record_allocation(virt_loc, size);
   }
 
+  kprintf("kmalloc: %u %u\n", size, (uintptr_t)virt_loc);
   return virt_loc;
 }
 
@@ -105,6 +106,7 @@ void kfree(void *obj){
   if (!freed){
     kfree_large(obj);
   }
+  kprintf("kfree: %u\n", (uintptr_t)obj);
 }
 
 PRIVATE bool kfree_large(void *obj){

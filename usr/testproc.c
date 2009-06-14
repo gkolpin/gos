@@ -4,6 +4,7 @@
 
 PRIVATE void _printf(const char* string);
 PRIVATE void _print_int(int n);
+PRIVATE int _strlen(char *);
 
 void proc2();
 
@@ -24,7 +25,13 @@ void proc1(){
   _printf("\n");
   _printf("fd: ");
   _print_int(fd);
-  while (1);
+  write(fd, "hello", sizeof("hello") - 1);
+  char buf[20];
+  while (1){
+    read(fd, buf, sizeof(buf));
+    write(fd, buf, _strlen(buf) * sizeof(char));
+    _printf("z");
+  }
 
   _print_int(status);
   _printf("\n");
@@ -40,6 +47,12 @@ void proc1(){
     _printf("\n");
     i++;
   }
+}
+
+PRIVATE int _strlen(char *s){
+  int i = 0;
+  while (*(s++)) i++;
+  return i;
 }
 
 PRIVATE void _printf(const char* string){

@@ -13,5 +13,9 @@ void wait(uint32 *status);
 int brk(const void *addr);
 void * sbrk(int incr);
 int getpid();
+int open(char *path);
+int read(int d, void*, size_t);
+int write(int d, void*, size_t);
+int ioctl(int d, int request, void*);
 
 #endif

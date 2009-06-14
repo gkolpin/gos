@@ -31,6 +31,11 @@ void list_add(list l, list_node *node){
   l->head.prev = node;
 }
 
+void list_remove(list l, list_node *node){
+  node->prev->next = node->next;
+  node->next->prev = node->prev;
+}
+
 list_node * list_next(list l, list_node *node){
   if (&l->head == node->next){
     return NULL;

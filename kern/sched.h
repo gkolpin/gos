@@ -15,6 +15,7 @@ void sched_dequeue(uint32 task_id);
 task * get_cur_task();
 task * get_task_for_id(uint32 task_id);
 uint32 * get_children_for_task(uint32 task_id, int *n_tasks);
+void task_sleep();
 
 /* defined in i386lib.s */
 void restart_task();

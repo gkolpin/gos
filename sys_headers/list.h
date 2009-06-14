@@ -15,6 +15,7 @@ typedef struct list_node {
 list _list_init(size_t node_offset);
 bool destroy_list(list);
 void list_add(list l, list_node *node);
+void list_remove(list l, list_node *node);
 list_node * list_next(list l, list_node*);
 list_node * list_head(list l);
 size_t list_node_offset(list l);

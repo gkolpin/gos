@@ -73,5 +73,6 @@ void task_set_mem(task*, void* dest, void* src, uint32 len);
 uint32 get_data_heap_end(task*);
 bool move_data_heap_end(task*, int amnt);
 int task_add_vfd(task*, vfd);
+vfd task_get_vfd(task*, int fd);
 
 #endif

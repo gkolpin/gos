@@ -19,6 +19,7 @@ struct _fd {
 };
 
 PRIVATE void close_all_descriptors(task*);
+PRIVATE void copyDescriptors(task *from, task *to);
 
 task * create_task(uint32 task_start_addr){
   task *task_return = (task*)kmalloc(sizeof(task));
@@ -114,11 +115,15 @@ task * create_kernel_task(uint32 task_start_addr){
 void task_free(task *t){
   int i;
   for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
-    free_pages((void*)t->stack_phys_pages[i], 1);
+    free_pages((void*)(t->stack_phys_pages[i] * PAGE_SIZE), 1);
   }
   
-  for (i = 0; i < t->num_segments; i++){
-    free_pages((void*)t->segment_phys_addr[i], t->segment_pages[i]);
+  if (NULL == t->parent){
+    /* don't delete code pages until parent is killed since
+     * parent and child processes share them */
+    for (i = 0; i < t->num_segments; i++){
+      free_pages((void*)t->segment_phys_addr[i], t->segment_pages[i]);
+    }
   }
 
   pd_free(t->pd_phys);
@@ -147,6 +152,19 @@ void add_task_segment(task *t, uint32 segment_phys_addr, uint32 segment_data_len
   vm_alloc_at((void*)segment_phys_addr, segment_virt_addr, segment_data_length, USER);
 }
 
+PRIVATE void copyDescriptors(task *from, task *to){
+  struct _fd *curFd;
+  struct _fd *newFd;
+  list_node *curNode;
+  for (curNode = list_head(from->descriptors); NULL != curNode; curNode = list_next(from->descriptors, curNode)){
+    curFd = cur_obj(from->descriptors, curNode, struct _fd);
+    newFd = (struct _fd*)kmalloc(sizeof(struct _fd));
+    kmemcpy(newFd, curFd, sizeof(struct _fd));
+    newFd->vfd = vfs_copy_vfd(curFd->vfd);
+    list_add(to->descriptors, &newFd->l_node);
+  }
+}
+
 task * clone_task(task *t){
   int i;
   task *newTask;
@@ -157,6 +175,9 @@ task * clone_task(task *t){
   newTask->has_run = FALSE;
   newTask->pd_phys = copy_cur_page_dir();
   newTask->parent = t;
+  newTask->descriptors = list_init(struct _fd, l_node);
+
+  copyDescriptors(t, newTask);
 
   for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
     newTask->stack_phys_pages[i] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
@@ -283,4 +304,17 @@ PRIVATE void close_all_descriptors(task *t){
     kfree(fd);
     n = tmp;
   } 
+}
+
+vfd task_get_vfd(task *t, int d){
+  list_node *n;
+  struct _fd *fd;
+  for (n = list_head(t->descriptors); n != NULL && d > 0; d--);
+  
+  if (n != NULL){
+    fd = cur_obj(t->descriptors, n, struct _fd);
+    return fd->vfd;
+  }
+  
+  return NULL;
 }

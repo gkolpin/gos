@@ -1,4 +1,5 @@
 #include "console.h"
+#include "rs232.h"
 #include "kprintf.h"
 #include "types.h"
 #include "keyboard.h"
@@ -133,6 +134,7 @@ PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uin
   mem_map map[128];
 
   pic_init();
+  serial_init();
   cons_init();
   kprintf("cons_initted\n");
   intvect_init();

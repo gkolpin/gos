@@ -1,6 +1,7 @@
 #include "tty.h"
 #include "gos.h"
 #include "types.h"
+#include "circ_buf.h"
 
 #define BUF_SIZE 2048
 #define IBUF_SIZE 128
@@ -11,7 +12,11 @@ typedef struct _tty_dev {
   int nbytes;			/* bytes in the term buffer */
   int start;			/* location of start of buffer  */
   char buf[BUF_SIZE];		/* circular term buffer */
-  char ibuf[IBUF_SIZE];		/* circular input buffer */
+  
+  circ_buf ibuf;		/* circular input buffer */
+
+  /* terminal options */
+  bool echo;
 } tty_dev;
 
 PRIVATE tty_dev *cons_bufs;	/* array of vterms */
@@ -25,7 +30,9 @@ PRIVATE int init(void *dev_data){
 }
 
 PRIVATE int read(void *buf, uint32 num_bytes, void *dev_data){
-  
+  int term_no = (int)dev_data;
+  tty_dev *t = &cons_bufs[term_no];
+  return cbuf_read(t->ibuf, buf, num_bytes);
 }
 
 PRIVATE int write(void *buf, uint32 num_bytes, void *dev_data){
@@ -50,6 +57,8 @@ driver * tty_init(){
     vt = &cons_bufs[i];
     vt->nbytes = 0;
     vt->start = 0;
+    vt->ibuf = circ_buf_init(IBUF_SIZE);
+    vt->echo = TRUE;
   }
   cur_term = SYS_TERM;
 
@@ -61,11 +70,16 @@ driver * tty_init(){
 }
 
 void kb_int(void){
-  putchar(getchar(), cur_term);
+  char c = getchar();
+  if (cons_bufs[cur_term].echo)
+    putchar(c, cur_term);
+  tty_dev *t = &cons_bufs[cur_term];
+  cbuf_write(t->ibuf, &c, sizeof(char));
 }
 
 void kputchar(char c){
   putchar(c, SYS_TERM);
+  serial_putchar(c);
 }
 
 PRIVATE void putchar(char c, int term){

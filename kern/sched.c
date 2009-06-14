@@ -15,15 +15,15 @@
 
 typedef struct sched_item {
   task *task;
-  struct sched_item *next;
+  list_node l_node;
 } sched_item;
 
 /* proc table */
 PRIVATE sched_item * proc_table[MAX_PROC];
-/* process queue */
-PRIVATE sched_item *run_queue_head;
-/* tail of process queue */
-PRIVATE sched_item *run_queue_tail;
+/* runnable queue */
+PRIVATE list run_queue;
+/* blocked (sleeping) processes */
+PRIVATE list blocked_queue;
 /* sched_item of idle task - run when nothing else is available */
 PRIVATE sched_item *idle_task;
 /* number of scheduled procs */
@@ -40,8 +40,8 @@ void sched_init(){
     proc_table[i] = NULL;
   }
 
-  run_queue_head = NULL;
-  run_queue_tail = NULL;
+  run_queue = list_init(sched_item, l_node);
+  blocked_queue = list_init(sched_item, l_node);
   no_procs = 0;
 
   idle_task = create_sched_item(MAX_PROC + 1, ~0, create_idle_task(), NULL);
@@ -59,7 +59,6 @@ PRIVATE sched_item * create_sched_item(uint32 id, uint16 ticks,
   schedRet->task = t;
   schedRet->task->id = id;
   schedRet->task->ticks = ticks;
-  schedRet->next = next;
   return schedRet;
 }
 
@@ -100,14 +99,11 @@ PRIVATE void set_new_running_task(sched_item *item){
 }
 
 void sched_enqueue(uint32 task_id){
-  sched_item **ppCurItem;
+  sched_item *pSchedItem = proc_table[task_id];
   /* place at end of run queue */
-  for (ppCurItem = &run_queue_head; *ppCurItem; ppCurItem = &(*ppCurItem)->next);
-  *ppCurItem = proc_table[task_id];
-  (*ppCurItem)->next = NULL;
-  run_queue_tail = proc_table[task_id];
+  list_add(run_queue, &pSchedItem->l_node);
 
-  (*ppCurItem)->task->ticks = TICKS_QUANTUM;
+  pSchedItem->task->ticks = TICKS_QUANTUM;
 
   if (cur_task_p == idle_task->task){
     set_new_running_task(proc_table[task_id]);
@@ -115,21 +111,15 @@ void sched_enqueue(uint32 task_id){
 }
 
 void sched_dequeue(uint32 task_id){
-  task *t = get_task_for_id(task_id);
+  sched_item *schedItem = proc_table[task_id];
+  list_remove(run_queue, &schedItem->l_node);
+  list_node *lNode;
 
-  sched_item **ppCurItem;
-  sched_item *pCurItem;
-  sched_item *prevItem = NULL;
-  for (ppCurItem = &run_queue_head; (*ppCurItem)->task != t; prevItem = *ppCurItem,
-	 ppCurItem = &(*ppCurItem)->next);
-  pCurItem = *ppCurItem;
-  *ppCurItem = (*ppCurItem)->next;
-
-  if (pCurItem == run_queue_tail)
-    run_queue_tail = prevItem;  
-
-  if (t == cur_task_p){
-    set_new_running_task(*ppCurItem);
+  if (schedItem->task == cur_task_p){
+    if (NULL != (lNode = list_head(run_queue)))
+      set_new_running_task(cur_obj(run_queue, list_head(run_queue), sched_item));
+    else 
+      set_new_running_task(NULL);
   }
 }
 
@@ -158,4 +148,8 @@ uint32 * get_children_for_task(uint32 task_id, int *n_tasks){
   *n_tasks = ret_i;
 
   return retVal;
+}
+
+void task_sleep(){
+  
 }

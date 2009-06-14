@@ -14,5 +14,6 @@ int vfs_close(vfd fd);
 int vfs_mount(const char *type, const char *dir);
 
 void register_fs(const char *type, filesystem*);
+vfd vfs_copy_vfd(vfd src);
 
 #endif

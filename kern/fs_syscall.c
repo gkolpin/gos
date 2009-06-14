@@ -11,10 +11,31 @@ void sys_open(const char *path){
 }
 
 void sys_read(int d, void *buf, size_t nbytes){
-
+  task *t = get_cur_task();
+  vfd vfd = task_get_vfd(t, d);
+  int ret;
+  if (!within_task_mem_map(t, (uintptr_t)buf) ||
+      !(within_task_mem_map(t, (uintptr_t)buf + nbytes))){
+    set_syscall_return(t, -1);
+    return;
+  }
+  ret = vfs_read(vfd, buf, nbytes);
+  if (0 == ret){
+    /* set task to block */
+  }
+  set_syscall_return(t, ret);
 }
 
 void sys_write(int d, void *buf, size_t nbytes){
-
+  task *t = get_cur_task();
+  vfd vfd = task_get_vfd(t, d);
+  int ret;
+  if (!within_task_mem_map(t, (uintptr_t)buf) ||
+      !(within_task_mem_map(t, (uintptr_t)buf + nbytes))){
+    set_syscall_return(t, -1);
+    return;
+  }
+  ret = vfs_write(vfd, buf, nbytes);
+  set_syscall_return(t, ret);
 }
 

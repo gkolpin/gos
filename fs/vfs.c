@@ -102,3 +102,9 @@ PRIVATE struct _fs_node * get_fs_node_for_path(const char *path){
   }
   return NULL;
 }
+
+vfd vfs_copy_vfd(vfd src){
+  vfd retVfd = (vfd)kmalloc(sizeof(struct _vfd));
+  kmemcpy(retVfd, src, sizeof(struct _vfd));
+  return retVfd;
+}
