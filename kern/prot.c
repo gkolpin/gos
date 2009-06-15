@@ -32,7 +32,8 @@ PRIVATE void init_tss_desc(gdt_entry *tss_desc, void* tss, uint32 tss_pos){
 
   /* load kernel's stack info into tss */
   ((uint32*)tss)[SS_0] = R0_DATA_S;
-  ((uint32*)tss)[ESP_0] = (uint32)&GOS_BOTTOM_STACK;
+  /* no longer load GOS_BOTTOM_STACK since each task will have its own kernel stack */
+  //((uint32*)tss)[ESP_0] = (uint32)&GOS_BOTTOM_STACK;
 
   /* load tss register with tss segment selector */
   cmd_ltr((uint16)(tss_pos << 3));

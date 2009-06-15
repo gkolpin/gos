@@ -23,6 +23,9 @@ PRIVATE void copyDescriptors(task *from, task *to);
 
 task * create_task(uint32 task_start_addr){
   task *task_return = (task*)kmalloc(sizeof(task));
+
+  task_return->kern_stack = kmalloc(PAGE_SIZE);
+
   task_return->stack_phys_pages[0] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
 
   vm_alloc_at((void*)(task_return->stack_phys_pages[0] * PAGE_SIZE),
@@ -114,6 +117,9 @@ task * create_kernel_task(uint32 task_start_addr){
 
 void task_free(task *t){
   int i;
+
+  kfree(t->kern_stack);
+
   for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
     free_pages((void*)(t->stack_phys_pages[i] * PAGE_SIZE), 1);
   }
@@ -171,6 +177,8 @@ task * clone_task(task *t){
   newTask = (task*)kmalloc(sizeof(task));
 
   kmemcpy(newTask, t, sizeof(task));
+
+  newTask->kern_stack = kmalloc(PAGE_SIZE);
 
   newTask->has_run = FALSE;
   newTask->pd_phys = copy_cur_page_dir();

@@ -21,5 +21,6 @@ list_node * list_head(list l);
 size_t list_node_offset(list l);
 bool list_empty(list);
 void list_insert_before(list_node *to_insert, list_node *node_in_list);
+void list_prepend(list l, list_node *node);
 
 #endif

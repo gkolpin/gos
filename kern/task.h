@@ -31,6 +31,9 @@ typedef struct task{
   reg_t esp;
   reg_t ss;
 
+  void *kern_stack;		/* per-task kernel stack space */
+  uintptr_t kern_stack_sp;	/* kernel stack pointer */
+
   uint32 stack_len;		/* size of stack in bytes */
   uint32 stack_phys_pages[MAX_STACK_PAGES];
   uint32 num_segments;		/* number of memory segments */

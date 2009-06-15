@@ -150,6 +150,19 @@ uint32 * get_children_for_task(uint32 task_id, int *n_tasks){
   return retVal;
 }
 
-void task_sleep(){
-  
+void task_finish_sleep(uintptr_t esp){
+  cur_task_p->kern_stack_sp = esp;
+  list_add(blocked_queue, &proc_table[cur_task_p->id]->l_node);
+  sched_dequeue(cur_task_p->id);
+  restart_task();
+}
+
+void wake_task(uint32 task_id){
+  sched_item *pSchedItem = proc_table[task_id];
+  list_remove(blocked_queue, &pSchedItem->l_node);
+
+  /* place at beginning of run queue */
+  list_prepend(run_queue, &pSchedItem->l_node);
+  set_new_running_task(pSchedItem);
+  start_sleeping_task(pSchedItem->task->kern_stack_sp);
 }

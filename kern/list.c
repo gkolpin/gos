@@ -66,3 +66,12 @@ void list_insert_before(list_node *to_insert, list_node *node_in_list){
   node_in_list->prev = to_insert;
   node_in_list->prev = to_insert;
 }
+
+void list_prepend(list l, list_node *node){
+  list_node *l_node = list_head(l);
+  if (NULL == l_node){
+    list_add(l, node);
+  } else {
+    list_insert_before(node, l_node);
+  }
+}

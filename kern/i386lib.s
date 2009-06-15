@@ -8,6 +8,8 @@
 ;; void cmd_litr(uint16 tss_pos);
 ;; void cmd_sti();
 ;; void cmd_hlt();
+;; void task_sleep();
+;; void start_sleeping_task(uintptr_t esp)
 ;; void restart_task();
 ;; void load_cr3(uint32 pdb_addr);
 ;; void enable_paging();
@@ -24,6 +26,7 @@ extern  pic_eoi
 extern	ksyscall
 extern	handle_page_fault
 extern	tss_p
+extern 	task_finish_sleep
 	
 ;; port I/O
 global	outb
@@ -38,9 +41,10 @@ global	cmd_hlt
 global  load_cr3
 global	enable_paging
 ;; proc
+global 	task_sleep
+global	start_sleeping_task
 global	restart_task
 global	idle_task_start
-global	GOS_BOTTOM_STACK
 ;; misc
 global	get_eflags
 global	bit_scan_forward
@@ -178,8 +182,26 @@ get_eflags:
 	mov	eax, [esp]
 	add	esp, 4
 	ret
+	
+;; void task_sleep
+;; prepares the task to sleep
+task_sleep:	
+	pusha			;store all registers
+	push	esp
+	;; this procedure won't return - instead task_finish_sleep
+	;; will will call restart_task
+	call 	task_finish_sleep
+	
+;; void start_sleeping_task(uintptr_t esp)
+start_sleeping_task:	
+	push	ebp
+	mov	ebp, esp
+	mov	esp, [ebp + 8]
+	popa
+	ret			;this will return to the sleeping task's location
 
 %define	STACK_TOP	68
+%define KERN_STACK_P	68
 %define TSS_ESP0	4
 %define	TSS_SS0		8
 
@@ -221,7 +243,15 @@ IDT:
 	push	fs
 	push	gs
 	
-	mov	esp, GOS_BOTTOM_STACK
+	mov	[EAX_TMP], eax
+
+	mov	eax, [cur_task_p]
+	add	eax, KERN_STACK_P
+	mov	eax, [eax]
+	add	eax, 4096	; kernel stack is one page
+
+	mov	esp, eax
+	mov	eax, [EAX_TMP]
 %endmacro
 
 KEYBOARD_INT:
@@ -292,9 +322,6 @@ LIDTR:
 	DW	0x7FF		; 256 * 8 - 1 :	 size of idt
 	DD	IDT
 
-GOS_TOP_STACK:
-	TIMES	0x1000 DB 0
-GOS_BOTTOM_STACK:
-
 [section .data]
 ERR_NUM:	DD 0
+EAX_TMP:	DD 0
