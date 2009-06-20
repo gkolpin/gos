@@ -2,7 +2,7 @@
 #include "gos.h"
 #include "types.h"
 #include "circ_buf.h"
-#include "sched.h"
+#include "wait.h"
 
 #define BUF_SIZE 2048
 #define IBUF_SIZE 128
