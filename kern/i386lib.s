@@ -10,7 +10,7 @@
 ;; void cmd_hlt();
 ;; void task_sleep();
 ;; void start_sleeping_task(uintptr_t esp)
-;; void restart_task();
+;; void _restart_task();
 ;; void load_cr3(uint32 pdb_addr);
 ;; void enable_paging();
 ;; uint32 bit_scan_forward(uint32)
@@ -27,6 +27,7 @@ extern	ksyscall
 extern	handle_page_fault
 extern	tss_p
 extern 	task_finish_sleep
+extern 	restart_task
 	
 ;; port I/O
 global	outb
@@ -43,7 +44,7 @@ global	enable_paging
 ;; proc
 global 	task_sleep
 global	start_sleeping_task
-global	restart_task
+global	_restart_task
 global	idle_task_start
 ;; misc
 global	get_eflags
@@ -206,12 +207,12 @@ start_sleeping_task:
 %define	TSS_SS0		8
 
 	
-;; restart_task();
+;; _restart_task();
 ;; runs task pointed to by cur_task_p
-restart_task:
+_restart_task:
 	push	ebp
 	mov	ebp, esp
-		
+	
 	mov	eax, [cur_task_p]
 	add	eax, STACK_TOP
 	mov	ecx, [tss_p]

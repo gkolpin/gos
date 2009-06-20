@@ -2,6 +2,7 @@
 #include "gos.h"
 #include "types.h"
 #include "circ_buf.h"
+#include "sched.h"
 
 #define BUF_SIZE 2048
 #define IBUF_SIZE 128
@@ -17,6 +18,8 @@ typedef struct _tty_dev {
 
   /* terminal options */
   bool echo;
+  /* waitpoint for blocked reads  */
+  waitpoint wp_read_block;
 } tty_dev;
 
 PRIVATE tty_dev *cons_bufs;	/* array of vterms */
@@ -32,7 +35,11 @@ PRIVATE int init(void *dev_data){
 PRIVATE int read(void *buf, uint32 num_bytes, void *dev_data){
   int term_no = (int)dev_data;
   tty_dev *t = &cons_bufs[term_no];
-  return cbuf_read(t->ibuf, buf, num_bytes);
+  size_t bytes;
+  while (!(bytes = cbuf_read(t->ibuf, buf, num_bytes))){
+    waitpoint_wait(t->wp_read_block);
+  }
+  return bytes;
 }
 
 PRIVATE int write(void *buf, uint32 num_bytes, void *dev_data){
@@ -59,6 +66,7 @@ driver * tty_init(){
     vt->start = 0;
     vt->ibuf = circ_buf_init(IBUF_SIZE);
     vt->echo = TRUE;
+    vt->wp_read_block = waitpoint_create(tty_dev, wp_read_block);
   }
   cur_term = SYS_TERM;
 
@@ -75,6 +83,7 @@ void kb_int(void){
     putchar(c, cur_term);
   tty_dev *t = &cons_bufs[cur_term];
   cbuf_write(t->ibuf, &c, sizeof(char));
+  waitpoint_wake_all(t->wp_read_block);
 }
 
 void kputchar(char c){

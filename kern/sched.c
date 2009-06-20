@@ -34,6 +34,10 @@ PRIVATE task * create_idle_task();
 PRIVATE sched_item * create_sched_item(uint32 id, uint16 ticks, 
 				       task *t, sched_item *next);
 
+/* defined in i386lib.s */
+void _restart_task();
+void task_finish_sleep(uintptr_t esp);
+
 void sched_init(){
   int i;
   for (i = 0; i < MAX_PROC; i++){
@@ -150,19 +154,24 @@ uint32 * get_children_for_task(uint32 task_id, int *n_tasks){
   return retVal;
 }
 
+void restart_task(){
+  if (cur_task_p->waiting){
+    cur_task_p->waiting = FALSE;
+    start_sleeping_task(cur_task_p->kern_stack_sp);
+  } else {
+    _restart_task();
+  }
+}
+
 void task_finish_sleep(uintptr_t esp){
   cur_task_p->kern_stack_sp = esp;
-  list_add(blocked_queue, &proc_table[cur_task_p->id]->l_node);
   sched_dequeue(cur_task_p->id);
+  list_add(blocked_queue, &proc_table[cur_task_p->id]->l_node);
   restart_task();
 }
 
 void wake_task(uint32 task_id){
   sched_item *pSchedItem = proc_table[task_id];
   list_remove(blocked_queue, &pSchedItem->l_node);
-
-  /* place at beginning of run queue */
-  list_prepend(run_queue, &pSchedItem->l_node);
-  set_new_running_task(pSchedItem);
-  start_sleeping_task(pSchedItem->task->kern_stack_sp);
+  sched_enqueue(task_id);
 }

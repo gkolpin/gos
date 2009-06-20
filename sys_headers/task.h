@@ -4,6 +4,7 @@
 #include "types.h"
 #include "vfs.h"
 #include "list.h"
+#include "wait.h"
 
 #define MAX_TASK_SEGMENTS 10
 #define MAX_STACK_PAGES 10
@@ -60,6 +61,9 @@ typedef struct task{
   list descriptors;
   int sid;
   int pgid;
+
+  waitlink w_link;
+  bool waiting;
 } task;
 
 task * create_task(uint32 task_start_addr);

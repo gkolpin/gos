@@ -46,6 +46,8 @@ task * create_task(uint32 task_start_addr){
 
   task_return->descriptors = list_init(struct _fd, l_node);
 
+  task_return->waiting = FALSE;
+
   /*kprintf("\n");
   kprint_int((uint32)*esp);
   kprintf("\n");*/
@@ -77,6 +79,8 @@ task * create_task(uint32 task_start_addr){
 task * create_kernel_task(uint32 task_start_addr){
   task *task_return = (task*)kmalloc(sizeof(task));
 
+  task_return->kern_stack = kmalloc(PAGE_SIZE);
+
   task_return->stack_len = 0;
   task_return->num_segments = 0;
 
@@ -86,6 +90,8 @@ task * create_kernel_task(uint32 task_start_addr){
   task_return->has_run = FALSE;
   kprintf("copying current page dir\n");
   task_return->pd_phys = copy_cur_page_dir();
+
+  task_return->waiting = FALSE;
 
   /*kprintf("\n");
   kprint_int((uint32)*esp);
