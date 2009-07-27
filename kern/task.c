@@ -12,6 +12,13 @@
 /* default stack size is one page */
 #define DEFAULT_STACK_SIZE 1
 
+struct _mem_seg {
+  uint phys_page;		/* segment physical page number */
+  uintptr_t virt_addr;		/* segment virtual address */
+  uint pages;			/* segment size in pages */
+  list_node l_node;
+};
+
 struct _fd {
   int fd;
   vfd vfd;
@@ -20,19 +27,25 @@ struct _fd {
 
 PRIVATE void close_all_descriptors(task*);
 PRIVATE void copyDescriptors(task *from, task *to);
+PRIVATE void copyMemSegmentLists(task *from, task *to);
 
 task * create_task(uint32 task_start_addr){
   task *task_return = (task*)kmalloc(sizeof(task));
+  struct _mem_seg *stack = (struct _mem_seg*)kmalloc(sizeof(struct _mem_seg));
+  int i;
 
   task_return->kern_stack = kmalloc(PAGE_SIZE);
 
-  task_return->stack_phys_pages[0] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
-
-  vm_alloc_at((void*)(task_return->stack_phys_pages[0] * PAGE_SIZE),
-	      KERNEL_HEAP_START - PAGE_SIZE, PAGE_SIZE,
+  for (i = 0; i < NO_SEG_TYPES; i++){
+    task_return->mem_segments[i] = list_init(struct _mem_seg, l_node);
+  }
+  stack->phys_page = (uint)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
+  stack->virt_addr = (uint)KERNEL_HEAP_START - PAGE_SIZE;
+  vm_alloc_at((void*)(stack->phys_page * PAGE_SIZE),
+	      stack->virt_addr, PAGE_SIZE,
 	      USER);
-  task_return->stack_len = DEFAULT_STACK_SIZE * PAGE_SIZE;
-  task_return->num_segments = 0;
+  stack->pages = DEFAULT_STACK_SIZE;
+  list_add(task_return->mem_segments[STACK], &stack->l_node);
 
   task_return->data_seg_start_vaddr = 0;
   task_return->data_seg_end_vaddr = 0;
@@ -81,9 +94,6 @@ task * create_kernel_task(uint32 task_start_addr){
 
   task_return->kern_stack = kmalloc(PAGE_SIZE);
 
-  task_return->stack_len = 0;
-  task_return->num_segments = 0;
-
   task_return->data_seg_start_vaddr = 0;
   task_return->data_seg_end_vaddr = 0;
 
@@ -123,19 +133,24 @@ task * create_kernel_task(uint32 task_start_addr){
 
 void task_free(task *t){
   int i;
+  list_node *curNode;
+  list curList;
+  struct _mem_seg *curSeg;
 
   kfree(t->kern_stack);
 
-  for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
-    free_pages((void*)(t->stack_phys_pages[i] * PAGE_SIZE), 1);
-  }
   
-  if (NULL == t->parent){
-    /* don't delete code pages until parent is killed since
-     * parent and child processes share them */
-    for (i = 0; i < t->num_segments; i++){
-      free_pages((void*)t->segment_phys_addr[i], t->segment_pages[i]);
+  for (i = 0; i < NO_SEG_TYPES; i++){
+    curList = t->mem_segments[i];
+    while (NULL != (curNode = list_head(curList))){
+      curSeg = cur_obj(curList, curNode, struct _mem_seg);
+      if (!(NULL != t->parent && CODE == i)){
+	free_pages((void*)(curSeg->phys_page * PAGE_SIZE), curSeg->pages);
+      }
+      list_remove(curList, curNode);
+      kfree(curSeg);
     }
+    destroy_list(curList);
   }
 
   pd_free(t->pd_phys);
@@ -150,10 +165,11 @@ void add_task_segment(task *t, uint32 segment_phys_addr, uint32 segment_data_len
 		      uint32 segment_virt_addr, uint32 segment_pages){
   uint32 seg_end;
 
-  t->segment_phys_addr[t->num_segments] = segment_phys_addr;
-  t->segment_virt_addr[t->num_segments] = segment_virt_addr;
-  t->segment_pages[t->num_segments] = segment_pages;
-  t->num_segments++;
+  struct _mem_seg *seg = kmalloc(sizeof(struct _mem_seg));
+  list_add(t->mem_segments[CODE], &seg->l_node);
+  seg->phys_page = segment_phys_addr / PAGE_SIZE;
+  seg->virt_addr = segment_virt_addr;
+  seg->pages = segment_pages;
 
   /* increase data segment end */
   if ((seg_end = segment_virt_addr + segment_pages * PAGE_SIZE) > t->data_seg_start_vaddr){
@@ -177,6 +193,40 @@ PRIVATE void copyDescriptors(task *from, task *to){
   }
 }
 
+PRIVATE void copyMemSegmentLists(task *from, task *to){
+  int i;
+  list curList;
+  list_node *curNode;
+  struct _mem_seg *curSeg;
+  struct _mem_seg *newSeg;
+  for (i = 0; i < NO_SEG_TYPES; i++){
+    to->mem_segments[i] = list_init(struct _mem_seg, l_node);
+    curList = from->mem_segments[i];
+    for (curNode = list_head(curList); NULL != curNode; curNode = list_next(curList, curNode)){
+      curSeg = cur_obj(curList, curNode, struct _mem_seg);
+      newSeg = kmalloc(sizeof(struct _mem_seg));
+      kmemcpy(newSeg, curSeg, sizeof(struct _mem_seg));
+      list_add(to->mem_segments[i], &newSeg->l_node);
+    }
+  }
+}
+
+PRIVATE void copyStackPages(task *from, task *to){
+  list stackList_from = from->mem_segments[STACK];
+  list stackList_to = to->mem_segments[STACK];
+  list_node *curNode_from, *curNode_to;
+  struct _mem_seg *fromSeg, *toSeg;
+  for (curNode_from = list_head(stackList_from), curNode_to = list_head(stackList_to);
+       NULL != curNode_from;
+       curNode_from = list_next(stackList_from, curNode_from), 
+	 curNode_to = list_next(stackList_to, curNode_to)){
+    fromSeg = cur_obj(stackList_from, curNode_from, struct _mem_seg);
+    toSeg = cur_obj(stackList_to, curNode_to, struct _mem_seg);
+    toSeg->phys_page = (uint32)alloc_pages(fromSeg->pages) / PAGE_SIZE;
+    kmemcpyphys(toSeg->phys_page, fromSeg->phys_page, fromSeg->pages);
+  }
+}
+
 task * clone_task(task *t){
   int i;
   task *newTask;
@@ -193,10 +243,9 @@ task * clone_task(task *t){
 
   copyDescriptors(t, newTask);
 
-  for (i = 0; i < t->stack_len / PAGE_SIZE; i++){
-    newTask->stack_phys_pages[i] = (uint32)alloc_pages(DEFAULT_STACK_SIZE) / PAGE_SIZE;
-    kmemcpyphys(newTask->stack_phys_pages[i], t->stack_phys_pages[i], 1);
-  }
+  copyMemSegmentLists(t, newTask);
+
+  copyStackPages(t, newTask);
 
   return newTask;
 }
@@ -206,16 +255,20 @@ void set_syscall_return(task *t, uint32 ret_val){
 }
 
 void prepare_task(task *t){
-  int stack_pages = t->stack_len / PAGE_SIZE;
+  list stack_list = t->mem_segments[STACK];
   int i;
+  list_node *curNode;
+  struct _mem_seg *curSeg;
 
   set_pd(t->pd_phys);
 
   if (!t->has_run){
     t->has_run = TRUE;
 
-    for (i = 0; i < stack_pages; i++){
-      vm_alloc_at((void*)(t->stack_phys_pages[i] * PAGE_SIZE),
+    for (curNode = list_head(stack_list), i = 0; NULL != curNode; 
+	 curNode = list_next(stack_list, curNode), i++){
+      curSeg = cur_obj(stack_list, curNode, struct _mem_seg);
+      vm_alloc_at((void*)(curSeg->phys_page * PAGE_SIZE),
 		  KERNEL_HEAP_START - PAGE_SIZE * (i + 1),
 		  PAGE_SIZE, USER);
     }
@@ -232,18 +285,22 @@ void set_wait_for_child(task *t, uint32 child_task_id, uint32 statloc){
 
 bool within_task_mem_map(task *t, uint32 virt_addr){
   int i;
-  /* first look in data segments */
-  for (i = 0; i < t->num_segments; i++){
-    if (virt_addr >= t->segment_virt_addr[i] &&
-	virt_addr < (t->segment_virt_addr[i] + PAGE_SIZE * t->segment_pages[i])){
-      return TRUE;
+  list_node *curNode;
+  struct _mem_seg *curSeg;
+  list curList;
+  /* look in STACK and HEAP segments */
+  for (i = 0; i < NO_SEG_TYPES; i++){
+    if (CODE == i)
+      continue;
+    curList = t->mem_segments[i];
+    for (curNode = list_head(curList); NULL != curNode;
+	 curNode = list_next(curList, curNode)){
+      curSeg = cur_obj(curList, curNode, struct _mem_seg);
+      if (virt_addr >= curSeg->virt_addr &&
+	  virt_addr < (curSeg->virt_addr + PAGE_SIZE * curSeg->pages)){
+	return TRUE;
+      }
     }
-  }
-
-  /* now look in stack */
-  if (virt_addr < KERNEL_HEAP_START &&
-      virt_addr >= (KERNEL_HEAP_START - t->stack_len)){
-    return TRUE;
   }
 
   return FALSE;
@@ -258,16 +315,29 @@ uint32 get_data_heap_end(task *t){
   return t->data_seg_end_vaddr;
 }
 
+PRIVATE uint32 stack_len(task *t){
+  list l = t->mem_segments[STACK];
+  list_node *n;
+  struct _mem_seg *seg;
+  uint32 len = 0;
+  for (n = list_head(l); NULL != n; n = list_next(l, n)){
+    seg = cur_obj(l, n, struct _mem_seg);
+    len += seg->pages * PAGE_SIZE;
+  }
+  return len;
+}
+
 bool move_data_heap_end(task *t, int amnt){
   uint32 old_data_end = t->data_seg_end_vaddr;
   uint32 new_data_end = old_data_end + amnt;
   uint32 numBytes;
   void *new_mem;
+  struct _mem_seg *newSeg;
 
   kprintf("old_data_end: %d, new_data-end: %d\n", old_data_end, new_data_end);
 
   if (new_data_end < t->data_seg_start_vaddr ||
-      new_data_end > KERNEL_HEAP_START - t->stack_len){
+      new_data_end > KERNEL_HEAP_START - stack_len(t)){
     return FALSE;
   }
   
@@ -277,11 +347,13 @@ bool move_data_heap_end(task *t, int amnt){
       (numBytes = PAGE_ALIGN_UP(new_data_end) - PAGE_ALIGN_UP(old_data_end)) > 0){
     kprintf("allocating new pages!\n");
     /* need to allocate more pages */
+    newSeg = kmalloc(sizeof(struct _mem_seg));
     new_mem = alloc_pages(PAGES_FOR_BYTES(numBytes));
-    t->segment_phys_addr[t->num_segments] = (uint32)new_mem;
-    t->segment_pages[t->num_segments] = PAGES_FOR_BYTES(numBytes);
-    t->num_segments++;
+    newSeg->phys_page = (uintptr_t)new_mem / PAGE_SIZE;
+    newSeg->pages = PAGES_FOR_BYTES(numBytes);
     vm_alloc_at(new_mem, PAGE_ALIGN_UP(old_data_end), numBytes, USER);
+    newSeg->virt_addr = PAGE_ALIGN_UP(old_data_end);
+    list_add(t->mem_segments[HEAP], &newSeg->l_node);
   }
 
   return TRUE;

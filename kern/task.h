@@ -9,6 +9,13 @@
 #define MAX_TASK_SEGMENTS 10
 #define MAX_STACK_PAGES 10
 
+enum SEG_TYPES {
+  CODE = 0,
+  STACK,
+  HEAP,
+  NO_SEG_TYPES
+};
+
 typedef struct task{
   /* registers */
   reg_t gs;
@@ -35,12 +42,7 @@ typedef struct task{
   void *kern_stack;		/* per-task kernel stack space */
   uintptr_t kern_stack_sp;	/* kernel stack pointer */
 
-  uint32 stack_len;		/* size of stack in bytes */
-  uint32 stack_phys_pages[MAX_STACK_PAGES];
-  uint32 num_segments;		/* number of memory segments */
-  uint32 segment_phys_addr[MAX_TASK_SEGMENTS]; /* space for segment pointers */
-  uint32 segment_virt_addr[MAX_TASK_SEGMENTS];
-  uint32 segment_pages[MAX_TASK_SEGMENTS]; /* segment sizes in pages */
+  list mem_segments[NO_SEG_TYPES];	/* code, stack, and heap segments */
 
   uint32 data_seg_start_vaddr;	/* data segment start virtual address - page aligned */
   uint32 data_seg_end_vaddr;	/* data segment end virtual address - not page aligned*/
