@@ -1,6 +1,7 @@
 #include "gos.h"
 #include "rs232.h"
 #include "types.h"
+#include "portio.h"
 
 #define IO_PORT 0x3F8
 

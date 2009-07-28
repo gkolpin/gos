@@ -44,9 +44,9 @@ typedef entry_t* PAGE_DIR;
 PRIVATE PAGE_DIR page_dir;
 PRIVATE PAGE_DIR *pt_map;
 /* start of free space on kernel heap */
-PRIVATE uint32 kern_heap_free_addr = KERNEL_HEAP_START + VM_MAP_SIZE;
+/*PRIVATE uint32 kern_heap_free_addr = KERNEL_HEAP_START + VM_MAP_SIZE;*/
 /* start of free space on user heap */
-PRIVATE uint32 user_heap_free_addr = USER_HEAP_START;
+/*PRIVATE uint32 user_heap_free_addr = USER_HEAP_START;*/
 /* kernel virtual mem offset to translate between phys and virt mem */
 PRIVATE uint32 kern_virt_mem_offset = 0;
 
@@ -181,7 +181,6 @@ PRIVATE void map_pages(uint32 virtual_page_no, uint32 physical_page_no,
 			    PAGE_TABLE_ENTRY_MASK) >> PAGE_TABLE_BIT_SHIFT);
 
   uint32 pd_index, pt_index;
-  uint32 cur_physical_page = physical_page_no;
 
   for (pd_index = pd_entry_start; pd_index <= num_pd_entries; pd_index++){
     for (pt_index = pt_entry_start; 
@@ -207,8 +206,6 @@ PRIVATE PAGE_DIR allocate_new_pt(uint32 page_dir_index){
 
 PRIVATE void create_table_entries(uint32 page_dir_index, uint32 page_table_index,
 				  uint32 physical_page_no, uint32 flags){
-  uint32 new_page_addr;
-  uint32 new_page_no;
   PAGE_DIR new_pt;
 
   if (page_dir[page_dir_index] == EMPTY_PAGE){

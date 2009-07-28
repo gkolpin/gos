@@ -5,6 +5,7 @@
 #include "task.h"
 #include "vm.h"
 #include "mm.h"
+#include "utility.h"
 
 task * create_task_from_elf(byte_t *fileData, uint32 no_bytes){
   Elf32_Ehdr *elf_header = (Elf32_Ehdr*)fileData;
@@ -13,7 +14,7 @@ task * create_task_from_elf(byte_t *fileData, uint32 no_bytes){
   void *segPhysMem;
   void *virtAddrTemp;
 
-  int i, j;
+  int i;
   for (i = 0; i < elf_header->e_phnum; i++){
     curHeader = (Elf32_Phdr*)&fileData[elf_header->e_phoff + i * elf_header->e_phentsize];
     

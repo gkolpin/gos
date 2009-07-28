@@ -2,6 +2,7 @@
 #include "types.h"
 #include "syscall.h"
 #include "sched.h"
+#include "kmalloc.h"
 
 #define ERROR -1
 

@@ -3,6 +3,8 @@
 #include "devfs.h"
 #include "list.h"
 #include "filesystem.h"
+#include "kmalloc.h"
+#include "utility.h"
 
 struct _vfd {
   struct _fs_node *fsnod;
@@ -38,6 +40,7 @@ PRIVATE filesystem * find_fs_for_type(const char*);
 int vfs_init(){
   filesystems = list_init(struct _fs_node, l_node);
   registered_filesystems = list_init(struct _registered_fs_node, l_node);
+  return 0;
 }
 
 vfd vfs_open(const char *path){

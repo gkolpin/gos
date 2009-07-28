@@ -3,8 +3,9 @@
 #include "types.h"
 #include "sched.h"
 #include "task.h"
+#include "kmalloc.h"
 
-PRIVATE kill_child_tasks(uint32 task_id){
+PRIVATE void kill_child_tasks(uint32 task_id){
   int no_children;
   uint32 *children = get_children_for_task(task_id, &no_children);
   int i;

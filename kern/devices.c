@@ -1,5 +1,8 @@
-#include "devices.h"
 #include "gos.h"
+#include "devices.h"
+#include "tty.h"
+#include "kprintf.h"
+#include "keyboard.h"
 
 void init_devices(){
   tty_init();

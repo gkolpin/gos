@@ -5,6 +5,7 @@
 #include "filesystem.h"
 
 void devfs_init();
+void register_device(driver *d, char *name, void *dev_data);
 
 enum FILE_DESCRIPTORS {
   KEYBOARD,

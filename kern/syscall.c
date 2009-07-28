@@ -1,4 +1,6 @@
+#include "console.h"
 #include "syscall.h"
+#include "getpid.h"
 
 void ksyscall(uint32 p1, uint32 p2, uint32 p3, uint32 p4){
   /* p1 is syscall number */

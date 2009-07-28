@@ -20,14 +20,15 @@
 #include "clock.h"
 #include "devices.h"
 #include "vfs.h"
+#include "devfs.h"
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry*, uint32 gdt_size, uint32 tss_pos, void* tss);
 PRIVATE void retrieve_mem_map(uint32 extended_mem, mem_map*);
 
 void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
-  int i;
-  char input[3] = {'\0', '\n', '\0'};
-  uint8 hd_input_buf[512];
+  /*int i;*/
+  /*char input[3] = {'\0', '\n', '\0'};*/
+  /*uint8 hd_input_buf[512];*/
   byte_t *prog1buf;
 
   kern_init(extended_mem, gdt, gdt_size, tss_pos, tss);
@@ -49,8 +50,8 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
     cons_putchar(getchar());
     }*/
 
-  //cmd_int(33);
-  //cmd_int(33);
+  /*cmd_int(33);
+    cmd_int(33);*/
 
   /*  task * t1 = create_task(proc1);
   task * t2 = create_task(proc2);
@@ -58,12 +59,12 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   schedule(t2);*/
 
   kprintf("begin load program\n");
-  //prog1buf = (byte_t*)malloc(get_file_size(0));
+  /*prog1buf = (byte_t*)malloc(get_file_size(0));*/
   /* vm map program to 0x100000 (1MB) */
   uint32 prog_size = PAGES_FOR_BYTES(get_file_size(0));
   kprintf("file size in bytes: %d\n", get_file_size(0));
   kprintf("num file pages: %d\n", prog_size);
-  //prog1buf = (byte_t*)kmalloc(prog_size * 4096);
+  /*prog1buf = (byte_t*)kmalloc(prog_size * 4096);*/
   prog1buf = kmalloc(prog_size * PAGE_SIZE);
   kprintf("allocated pages for task\n");
 
@@ -82,18 +83,19 @@ void kern_start(uint32 extended_mem, void* gdt, uint32 gdt_size, uint32 tss_pos,
   schedule(t1);
   kprintf("scheduled\n");
 
-  //sched_int();
+  /*sched_int();*/
   restart_task();
 
-  //cmd_sti();
+  /*cmd_sti();*/
 
   while (1){
     cmd_hlt();
-    //sleep(1000);
-    //kprintf("awoken\n");
+    /*sleep(1000);
+      kprintf("awoken\n");*/
   }
 }
 
+/*
 PRIVATE void test_kmalloc(){
   void *t1, *t2, *t3;
   t1 = kmalloc(32);
@@ -127,6 +129,7 @@ PRIVATE void test_kmalloc(){
 
   kprintf("t1,: %u, t2: %u\n", (uint32)t1, (uint32)t2);
 }
+*/
 
 PRIVATE void kern_init(uint32 extended_mem, gdt_entry* gdt, uint32 gdt_size, uint32 tss_pos, void* tss){
   uint32 mm_start_page_reserved;

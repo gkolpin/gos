@@ -80,6 +80,6 @@ void intvect_init(void){
   }
   
   /* restore interrupts */
-  //cmd_sti();
+  /*cmd_sti();*/
 }
 

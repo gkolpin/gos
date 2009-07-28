@@ -1,5 +1,6 @@
 #include "syscall.h"
 #include "sched.h"
+#include "kprintf.h"
 
 void fork_cur_task(){
   task *curTask = get_cur_task();

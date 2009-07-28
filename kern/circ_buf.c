@@ -1,6 +1,7 @@
 #include "circ_buf.h"
 #include "gos.h"
 #include "types.h"
+#include "utility.h"
 #include "kmalloc.h"
 
 struct _circ_buf {

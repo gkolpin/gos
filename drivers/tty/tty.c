@@ -3,6 +3,11 @@
 #include "types.h"
 #include "circ_buf.h"
 #include "wait.h"
+#include "kmalloc.h"
+#include "devfs.h"
+#include "keyboard.h"
+#include "console.h"
+#include "rs232.h"
 
 #define BUF_SIZE 2048
 #define IBUF_SIZE 128
@@ -29,7 +34,7 @@ PRIVATE bool initted = FALSE;
 PRIVATE void putchar(char c, int term);
 
 PRIVATE int init(void *dev_data){
-  
+  return 0;
 }
 
 PRIVATE int read(void *buf, uint32 num_bytes, void *dev_data){
@@ -48,6 +53,7 @@ PRIVATE int write(void *buf, uint32 num_bytes, void *dev_data){
   for (i = 0; i < num_bytes; i++){
     putchar(((char*)buf)[i], term_no);
   }
+  return 0;
 }
 
 driver * tty_init(){

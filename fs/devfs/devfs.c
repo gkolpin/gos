@@ -3,6 +3,9 @@
 #include "list.h"
 #include "driver.h"
 #include "tty.h"
+#include "utility.h"
+#include "kmalloc.h"
+#include "vfs.h"
 
 struct _devfs_device {
   char *name;

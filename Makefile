@@ -1,6 +1,6 @@
 # Build flags
 SYS_HEADERS	:= sys_headers
-CF_GLOBAL	:= -g -I${SYS_HEADERS} -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 -m32 -march=i386
+CF_GLOBAL	:= -g -I${SYS_HEADERS} -ffreestanding -nostdlib -nodefaultlibs -nostdinc -fpack-struct -O0 -m32 -march=i386 -Wall -Werror -pedantic -ansi -std=c99
 ASMF_GLOBAL	:= -f elf
 LDF_GLOBAL	:= -melf_i386_fbsd -N
 

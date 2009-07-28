@@ -68,7 +68,6 @@ void list_insert_before(list_node *to_insert, list_node *node_in_list){
 }
 
 void list_prepend(list l, list_node *node){
-  list_node *l_node = list_head(l);
   if (list_empty(l)){
     list_add(l, node);
   } else {

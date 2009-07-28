@@ -1,6 +1,7 @@
 #include "clock.h"
 #include "gos.h"
 #include "types.h"
+#include "portio.h"
 #include "sched.h"
 
 /* clock 'ticks' 60 times a second */

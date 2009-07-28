@@ -37,16 +37,16 @@
 
 PRIVATE void set_sector_no(uint32);
 PRIVATE void hd_wait(uint8 mask, uint8 stop_wait_val);
-PRIVATE void disk_get_info(uint8* buf);
+/*PRIVATE void disk_get_info(uint8* buf);*/
 
 void hd_driver_init(){
 
 }
 
-PRIVATE void disk_get_info(uint8* buf){
+/*PRIVATE void disk_get_info(uint8* buf){
   hd_wait(HD_BUSY, 0);
 
-  /* used to select hd 0 */
+  //used to select hd 0
   set_sector_no(0);
   
   hd_wait(HD_BUSY, 0);
@@ -56,7 +56,7 @@ PRIVATE void disk_get_info(uint8* buf){
   hd_wait(HD_BUSY, 0);
 
   ins(HD_DATA, (word_t*)buf, HD_SECTOR_SIZE / 2);
-}
+}*/
 
 void disk_read_sector(uint32 sector, uint8* buf){
   /* wait until disk is not busy */

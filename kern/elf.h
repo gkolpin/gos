@@ -112,17 +112,19 @@ enum {
   SHT_DYNSYM,
   SHT_LOPROC = 0x70000000,
   SHT_HIPROC = 0x7fffffff,
-  SHT_LOUSER = 0x80000000,
-  SHT_HIUSER = 0xffffffff
 };
+
+#define SHT_LOUSER 0x80000000u
+#define SHT_HIUSER 0xffffffffu
 
 /* section attribute flags - sh_flags */
 enum {
   SHF_WRITE = 0x1,
   SHF_ALLOC = 0x2,
-  SHF_EXECINSTR = 0x4,
-  SHF_MASKPROC = 0xf0000000
+  SHF_EXECINSTR = 0x4
 };
+
+#define SHF_MASKPROC 0xf0000000u
 
 /* symbol table entry */
 typedef struct {

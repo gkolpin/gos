@@ -228,7 +228,6 @@ PRIVATE void copyStackPages(task *from, task *to){
 }
 
 task * clone_task(task *t){
-  int i;
   task *newTask;
   newTask = (task*)kmalloc(sizeof(task));
 

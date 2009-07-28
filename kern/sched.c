@@ -37,6 +37,7 @@ PRIVATE sched_item * create_sched_item(uint32 id, uint16 ticks,
 /* defined in i386lib.s */
 void _restart_task();
 void task_finish_sleep(uintptr_t esp);
+void start_sleeping_task(uintptr_t esp);
 
 void sched_init(){
   int i;

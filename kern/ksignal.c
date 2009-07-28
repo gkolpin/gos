@@ -2,6 +2,7 @@
 #include "types.h"
 #include "ksignal.h"
 #include "portio.h"
+#include "int.h"
 
 /* ticks per second */
 #define TICKS_SEC 	1193200
